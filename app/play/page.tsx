@@ -1,27 +1,42 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { ClientRoomState, PlayerMode } from '@/lib/types';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { GameRoom, Player, PlayerMode } from '@/lib/types';
 import { JoinForm } from '@/components/player/JoinForm';
 import { RatioSlider } from '@/components/player/RatioSlider';
 import { ThankYouScreen } from '@/components/player/ThankYouScreen';
 import { PixelScale } from '@/components/pixel/PixelScale';
 import { PixelBreakingNews } from '@/components/pixel/PixelBreakingNews';
+import { PixelTeam, PixelUser } from '@/components/pixel/PixelIcons';
+import {
+  subscribeRoom,
+  subscribePlayers,
+  checkRoomExists,
+  joinPlayer,
+  submitVote,
+  calculateTiltAngle,
+} from '@/lib/firebase-game';
 
-const DEFAULT_ROOM = 'CLASS';
+interface StoredPlayer {
+  pin: string;
+  id: string;
+  name: string;
+  type: PlayerMode;
+  teamName?: string;
+}
 
-export default function PlayerPage() {
-  const [player, setPlayer] = useState<{
-    id: string;
-    name: string;
-    type: PlayerMode;
-    teamName?: string;
-  } | null>(() => {
+function PlayerContent() {
+  const searchParams = useSearchParams();
+  const urlPin = searchParams.get('pin')?.toUpperCase() || '';
+
+  const [player, setPlayer] = useState<StoredPlayer | null>(() => {
     if (typeof window !== 'undefined') {
       try {
         const saved =
-          sessionStorage.getItem('dilemma_player_v5') ||
-          localStorage.getItem('dilemma_player_v5');
+          sessionStorage.getItem('dilemma_player_v6') ||
+          localStorage.getItem('dilemma_player_v6');
         if (saved) return JSON.parse(saved);
       } catch {
         // ignore
@@ -30,136 +45,107 @@ export default function PlayerPage() {
     return null;
   });
 
-  const [roomState, setRoomState] = useState<ClientRoomState | null>(null);
+  const [room, setRoom] = useState<GameRoom | null>(null);
+  const [players, setPlayers] = useState<Player[]>([]);
   const [localRational, setLocalRational] = useState<number>(50);
-  const [joining, setJoining] = useState(false);
+  const [timerRemaining, setTimerRemaining] = useState<number>(60);
+  const [joining, setJoining] = useState<boolean>(false);
   const [joinError, setJoinError] = useState<string | null>(null);
 
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const hasEverStartedRef = useRef<boolean>(false);
-  const lastResetAtRef = useRef<number>(0);
-  const currentStatusRef = useRef<string>('LOBBY');
 
-  // Keep currentStatusRef synced
+  // If URL has a different pin than stored player, handle appropriately
+  const activePin = player?.pin || urlPin;
+
+  // Real-time Firestore subscription to room and players
   useEffect(() => {
-    if (roomState?.status) {
-      currentStatusRef.current = roomState.status;
-      if (roomState.status !== 'LOBBY') {
-        hasEverStartedRef.current = true;
-      }
-      if (roomState.resetAt) {
-        lastResetAtRef.current = roomState.resetAt;
-      }
+    if (!player?.pin) {
+      setRoom(null);
+      setPlayers([]);
+      return;
     }
-  }, [roomState]);
 
-  // Polling room state every 1000ms with cold-start serverless resilience
-  useEffect(() => {
-    if (!player) return;
-    let isMounted = true;
+    const unsubRoom = subscribeRoom(player.pin, (updatedRoom) => {
+      setRoom(updatedRoom);
+    });
 
-    const fetchRoom = async () => {
-      try {
-        const queryParams = new URLSearchParams({
-          playerId: player.id,
-          name: player.name,
-          type: player.type,
-          ...(player.teamName ? { teamName: player.teamName } : {}),
-          clientStatus: currentStatusRef.current,
-          t: Date.now().toString(),
-        });
-
-        const res = await fetch(`/api/rooms/${DEFAULT_ROOM}?${queryParams.toString()}`, {
-          cache: 'no-store',
-        });
-        if (res.ok && isMounted) {
-          const data: ClientRoomState = await res.json();
-
-          // CRITICAL: Protect against cold-start / serverless instance mismatch
-          if (data.status !== 'LOBBY') {
-            hasEverStartedRef.current = true;
-            if (data.resetAt) {
-              lastResetAtRef.current = data.resetAt;
-            }
-            setRoomState(data);
-          } else {
-            // Only accept LOBBY if host explicitly reset or game never started yet
-            const isRealHostReset = Boolean(
-              data.resetAt && lastResetAtRef.current && data.resetAt > lastResetAtRef.current
-            );
-            if (!hasEverStartedRef.current || isRealHostReset) {
-              if (isRealHostReset) {
-                hasEverStartedRef.current = false;
-                if (data.resetAt) lastResetAtRef.current = data.resetAt;
-              }
-              setRoomState(data);
-            }
-            // Otherwise ignore transient LOBBY from cold container
-          }
-
-          if (data.myVote && debounceTimerRef.current === null) {
-            setLocalRational(data.myVote.rational);
-          }
-        }
-      } catch {
-        // offline fallback
+    const unsubPlayers = subscribePlayers(player.pin, (updatedPlayers) => {
+      setPlayers(updatedPlayers);
+      const me = updatedPlayers.find((p) => p.id === player.id);
+      if (me && debounceTimerRef.current === null) {
+        setLocalRational(me.rational);
       }
-    };
+    });
 
-    fetchRoom();
-    const interval = setInterval(fetchRoom, 1000);
     return () => {
-      isMounted = false;
-      clearInterval(interval);
+      unsubRoom();
+      unsubPlayers();
     };
-  }, [player]);
+  }, [player?.pin, player?.id]);
+
+  // Synchronized countdown timer
+  useEffect(() => {
+    if (!room) return;
+
+    if (!room.timerRunning || !room.timerEndsAt) {
+      setTimerRemaining(room.timerRemaining || 0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const remainingMs = Math.max(0, (room.timerEndsAt || 0) - now);
+      setTimerRemaining(Math.ceil(remainingMs / 1000));
+    }, 250);
+
+    return () => clearInterval(interval);
+  }, [room]);
 
   const handleJoin = async (formData: {
+    pin: string;
     name: string;
     type: PlayerMode;
     teamName?: string;
   }) => {
     setJoining(true);
     setJoinError(null);
-    try {
-      const id = 'p_' + Math.random().toString(36).substring(2, 9);
-      const res = await fetch(`/api/rooms/${DEFAULT_ROOM}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'join',
-          id,
-          name: formData.name,
-          type: formData.type,
-          teamName: formData.teamName,
-        }),
-      });
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        setJoinError(data.error || 'Không thể tham gia phòng. Vui lòng thử lại.');
+    try {
+      const pin = formData.pin.toUpperCase();
+      const exists = await checkRoomExists(pin);
+
+      if (!exists) {
+        setJoinError(`Không tìm thấy phòng có mã PIN "${pin}". Vui lòng hỏi lại quản trò.`);
         setJoining(false);
         return;
       }
 
-      const playerData = {
+      const id = 'p_' + Math.random().toString(36).substring(2, 9);
+      const joinedData = await joinPlayer(pin, {
         id,
         name: formData.name,
         type: formData.type,
         teamName: formData.teamName,
+      });
+
+      const playerData: StoredPlayer = {
+        pin,
+        id,
+        name: joinedData.name,
+        type: joinedData.type,
+        teamName: joinedData.teamName,
       };
 
       setPlayer(playerData);
-      setRoomState(data.room);
-      if (data.player) {
-        setLocalRational(data.player.rational);
-      }
+      setLocalRational(joinedData.rational);
+
       if (typeof window !== 'undefined') {
-        sessionStorage.setItem('dilemma_player_v5', JSON.stringify(playerData));
-        localStorage.setItem('dilemma_player_v5', JSON.stringify(playerData));
+        sessionStorage.setItem('dilemma_player_v6', JSON.stringify(playerData));
+        localStorage.setItem('dilemma_player_v6', JSON.stringify(playerData));
       }
-    } catch {
-      setJoinError('Lỗi kết nối máy chủ. Vui lòng thử lại.');
+    } catch (err) {
+      console.error(err);
+      setJoinError('Lỗi kết nối Firebase. Vui lòng thử lại.');
     } finally {
       setJoining(false);
     }
@@ -177,152 +163,232 @@ export default function PlayerPage() {
     debounceTimerRef.current = setTimeout(async () => {
       debounceTimerRef.current = null;
       try {
-        await fetch(`/api/rooms/${DEFAULT_ROOM}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'vote',
-            playerId: player.id,
-            rational: newRational,
-          }),
-        });
-      } catch {
-        // silent fail
+        await submitVote(player.pin, player.id, newRational);
+      } catch (err) {
+        console.error('Lỗi cập nhật vote:', err);
       }
     }, 150);
   };
 
-  const handleResetPlayer = () => {
-    if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('dilemma_player_v5');
-      localStorage.removeItem('dilemma_player_v5');
+  const handleLeaveRoom = () => {
+    if (confirm('Bạn có chắc muốn rời phòng này không?')) {
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('dilemma_player_v6');
+        localStorage.removeItem('dilemma_player_v6');
+      }
+      setPlayer(null);
+      setRoom(null);
+      setPlayers([]);
     }
-    setPlayer(null);
-    setRoomState(null);
   };
 
-  // 1. If not joined, show clean Join Form
+  // 1. MÀN HÌNH NHẬP THÔNG TIN VÀO PHÒNG
   if (!player) {
     return (
-      <main className="min-h-screen flex flex-col justify-center items-center px-4 bg-[#FBF9F5]">
-        <JoinForm onJoin={handleJoin} loading={joining} error={joinError} />
+      <main className="min-h-screen flex flex-col justify-between items-center p-6 bg-[#FBF9F5]">
+        <div className="w-full max-w-sm flex items-center justify-between text-xs text-zinc-500 font-medium">
+          <Link href="/" className="hover:text-black">
+            a dilemma
+          </Link>
+          <span>môn lịch sử báo chí</span>
+        </div>
+
+        <JoinForm
+          initialPin={activePin}
+          onJoin={handleJoin}
+          loading={joining}
+          error={joinError}
+        />
+
+        <div className="text-center text-xs text-zinc-400">
+          tham gia trực tuyến qua mã PIN 6 số của lớp học
+        </div>
       </main>
     );
   }
 
-  // 2. If game finished / thank you
-  if (roomState?.status === 'THANK_YOU') {
+  // 2. MÀN HÌNH SẢNH CHỜ SINH VIÊN (KHI HOST CHƯA BẤM START)
+  if (!room || room.status === 'LOBBY') {
     return (
-      <main className="min-h-screen flex flex-col justify-center items-center px-4 bg-[#FBF9F5]">
+      <main className="min-h-screen flex flex-col justify-between items-center p-6 select-none bg-[#FBF9F5]">
+        <div className="w-full max-w-sm flex items-center justify-between text-xs text-zinc-500 font-medium">
+          <div>
+            PIN: <span className="font-bold text-zinc-800">{player.pin}</span>
+          </div>
+          <button
+            type="button"
+            onClick={handleLeaveRoom}
+            className="text-zinc-500 hover:text-red-600 font-semibold cursor-pointer"
+          >
+            Rời phòng
+          </button>
+        </div>
+
+        <div className="w-full max-w-md mx-auto text-center my-auto py-8">
+          <div className="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-2">
+            ĐÃ KẾT NỐI PHÒNG HỌC
+          </div>
+
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#18181B] mb-2">
+            CHÀO MỪNG {player.name.toUpperCase()}!
+          </h2>
+
+          {player.teamName && (
+            <p className="text-xs text-emerald-700 font-semibold mb-4">
+              Đại diện cho: {player.teamName}
+            </p>
+          )}
+
+          <p className="text-sm text-zinc-600 mb-8 font-medium">
+            Bạn đã sẵn sàng. Vui lòng nhìn lên màn hình chính của quản trò và chờ trò chơi bắt đầu...
+          </p>
+
+          <div className="bg-white/70 p-4 mb-6">
+            <div className="text-xs text-zinc-500 font-semibold mb-2">
+              Sinh viên trong phòng: {players.length} người
+            </div>
+            <div className="flex flex-wrap justify-center gap-1.5 max-h-40 overflow-y-auto">
+              {players.map((p) => (
+                <div
+                  key={p.id}
+                  className="px-2 py-1 bg-zinc-100 text-[11px] font-semibold flex items-center gap-1"
+                >
+                  {p.type === 'team' ? (
+                    <PixelTeam className="w-3 h-3 text-emerald-600" />
+                  ) : (
+                    <PixelUser className="w-3 h-3 text-blue-600" />
+                  )}
+                  <span>{p.teamName ? `${p.teamName} (${p.name})` : p.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="text-center text-xs text-zinc-400">
+          đồng bộ tự động thời gian thực qua Firebase Firestore
+        </div>
+      </main>
+    );
+  }
+
+  // Calculate aggregated stats
+  let totalRational = 0;
+  let totalEmotional = 0;
+  players.forEach((p) => {
+    totalRational += p.rational;
+    totalEmotional += p.emotional;
+  });
+  const tiltAngle = calculateTiltAngle(totalRational, totalEmotional);
+
+  const mins = Math.floor(timerRemaining / 60);
+  const secs = timerRemaining % 60;
+  const timerStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+  const isTwistWaitingToStart =
+    (room.status === 'TWIST_1' || room.status === 'TWIST_2') &&
+    !room.timerRunning &&
+    room.twist !== null;
+
+  // 3. MÀN HÌNH KẾT THÚC CẢM ƠN
+  if (room.status === 'THANK_YOU') {
+    return (
+      <main className="min-h-screen flex flex-col justify-between items-center p-6 bg-[#FBF9F5]">
+        <div className="w-full max-w-sm flex items-center justify-between text-xs text-zinc-500 font-medium">
+          <div>PIN: {player.pin}</div>
+          <button
+            type="button"
+            onClick={handleLeaveRoom}
+            className="text-zinc-500 hover:text-red-600 font-semibold cursor-pointer"
+          >
+            Thoát phòng
+          </button>
+        </div>
+
         <ThankYouScreen
           playerName={player.name}
           teamName={player.teamName}
           rational={localRational}
           emotional={100 - localRational}
-          onResetPlayer={handleResetPlayer}
+          onResetPlayer={handleLeaveRoom}
         />
+
+        <div className="text-center text-xs text-zinc-400">
+          bài học: báo chí độc lập tìm kiếm sự thật toàn cảnh
+        </div>
       </main>
     );
   }
 
-  // Tilt angle for local scale
-  const localTilt = Math.round(((100 - localRational - localRational) / 100) * 16 * 10) / 10;
-  const mins = Math.floor((roomState?.timerRemaining || 0) / 60);
-  const secs = (roomState?.timerRemaining || 0) % 60;
-  const timerStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-
-  const isTwistWaiting =
-    (roomState?.status === 'TWIST_1' || roomState?.status === 'TWIST_2') &&
-    !roomState?.timerRunning &&
-    roomState?.twist !== null;
-
+  // 4. MÀN HÌNH ĐANG CHƠI (VÒNG 1, TWIST 1, TWIST 2)
   return (
-    <main className="min-h-screen relative flex flex-col items-center justify-between p-4 sm:p-6 bg-[#FBF9F5]">
-      {/* Top Bar Info: Unboxed, small text */}
-      <div className="w-full flex items-center justify-between text-xs text-zinc-500 font-medium select-none pt-1">
+    <main className="min-h-screen relative flex flex-col justify-between p-4 sm:p-6 select-none bg-[#FBF9F5]">
+      {/* Top Bar */}
+      <div className="w-full flex items-center justify-between text-xs text-zinc-500 font-medium">
         <div>
-          {player.teamName ? `${player.teamName} (${player.name})` : player.name}
+          PIN: <span className="font-bold text-zinc-800">{player.pin}</span> · {player.name}
         </div>
-        <div>
-          phòng lớp học
-        </div>
+        <div className="font-mono text-base font-bold text-zinc-800">{timerStr}</div>
       </div>
 
-      <div className="w-full max-w-xl mx-auto my-auto py-2">
-        {/* Full screen Breaking News when twist occurs, dismissed when host starts timer */}
-        {isTwistWaiting && roomState?.twist && (
-          <PixelBreakingNews
-            twist={roomState.twist}
-            timerRunning={roomState.timerRunning}
-          />
-        )}
+      {/* Breaking News Overlay for student */}
+      {isTwistWaitingToStart && room.twist && (
+        <PixelBreakingNews
+          twist={room.twist}
+          isHost={false}
+          timerRunning={room.timerRunning}
+        />
+      )}
 
-        {/* LOBBY VIEW - Clean, unboxed waiting room */}
-        {roomState?.status === 'LOBBY' && (
-          <div className="text-center py-10 px-2 animate-fadeIn">
-            <h2 className="text-xl font-bold text-[#18181B] mb-2">
-              đã sẵn sàng: {player.teamName ? `${player.teamName} (${player.name})` : player.name}
-            </h2>
-            <p className="text-xs text-zinc-500 mb-8 font-medium">
-              chờ quản trò bấm bắt đầu chơi trên màn hình chính...
-            </p>
-
-            <div className="text-left text-xs text-zinc-700 leading-relaxed max-w-sm mx-auto my-6 p-4 bg-white/80">
-              <div className="font-bold text-zinc-900 mb-1">TÌNH HUỐNG GIẢ ĐỊNH:</div>
-              Có 2 bệnh nhân nhiễm bệnh đang chuyển biến tiêu cực. Bạn nắm trong tay 100 Giá Đại lộ để lựa chọn giữa:
-              <div className="mt-2 space-y-1">
-                <div>
-                  • <span className="font-bold text-blue-700">Lý trí</span>: Trị dứt điểm 1 người (thực tế, chắc chắn).
-                </div>
-                <div>
-                  • <span className="font-bold text-red-600">Tình cảm</span>: Trị cầm chừng cả 2 người (tình cảm, rủi ro).
-                </div>
-              </div>
-            </div>
+      {/* Main Interactive Stage */}
+      <div className="flex-1 flex flex-col items-center justify-center my-auto py-2">
+        <div className="w-full max-w-lg text-center">
+          <div className="text-xs uppercase tracking-wider text-zinc-500 font-bold mb-1">
+            {room.status === 'ROUND_1' && 'Vòng 1: Tình huống ban đầu (60s)'}
+            {room.status === 'TWIST_1' && 'Vòng 2: Breaking News 1 (30s)'}
+            {room.status === 'TWIST_2' && 'Vòng 3: Breaking News 2 (30s)'}
           </div>
-        )}
 
-        {/* ACTIVE PLAY VIEW: Large Centered Timer + Large Scale + Enlarged Slider */}
-        {roomState && roomState.status !== 'LOBBY' && (
-          <div className="flex flex-col items-center animate-fadeIn w-full">
-            {/* BIG CENTERED TIMER - Placed directly above the scale */}
-            <div className="text-center mb-1">
-              <div
-                className={`font-mono text-4xl sm:text-5xl font-black ${
-                  roomState.timerRunning && roomState.timerRemaining <= 10
-                    ? 'text-red-600 animate-pulse'
-                    : 'text-[#18181B]'
-                }`}
-              >
-                {timerStr}
-              </div>
-              <div className="text-[11px] text-zinc-500 font-medium">
-                {roomState.timerRunning ? 'đồng hồ đang đếm ngược' : 'tạm dừng'}
-              </div>
-            </div>
-
-            {/* The Physical Scale (Enlarged, safe clearance) */}
+          {/* Scale with player coins */}
+          <div className="my-2 pointer-events-none">
             <PixelScale
               rationalAmount={localRational}
               emotionalAmount={100 - localRational}
-              tiltAngle={localTilt}
+              tiltAngle={tiltAngle}
               size="md"
               showCoins
             />
-
-            {/* The Smooth Ratio Slider (No overlap with scale) */}
-            <RatioSlider
-              rational={localRational}
-              onChange={handleSliderChange}
-              disabled={!roomState.timerRunning && roomState.timerRemaining === 0}
-            />
           </div>
-        )}
+
+          {/* Interactive Ratio Slider */}
+          <RatioSlider
+            rational={localRational}
+            onChange={handleSliderChange}
+            disabled={!room.timerRunning}
+          />
+        </div>
       </div>
 
-      <div className="text-center text-[11px] text-zinc-400 pb-1">
-        a dilemma · lịch sử báo chí
+      {/* Bottom Hint */}
+      <div className="text-center text-xs text-zinc-400 py-2">
+        {room.timerRunning
+          ? 'Kéo thanh trượt để phân bổ 100 Giá Đại lộ (10 đồng xu)'
+          : 'Đang tạm dừng theo hướng dẫn của quản trò...'}
       </div>
     </main>
+  );
+}
+
+export default function PlayerPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#FBF9F5] text-zinc-500 text-sm">
+          Đang kết nối phòng chơi...
+        </div>
+      }
+    >
+      <PlayerContent />
+    </Suspense>
   );
 }

@@ -1,0 +1,6 @@
+{
+  "summary":  "Kế hoạch triển khai nâng cấp toàn diện dự án A Dilemma: Nâng cấp Next.js 16 mới nhất, tích hợp Firebase Firestore để đồng bộ thời gian thực chống văng phòng trên serverless Vercel, đổi mới luồng tạo phòng chủ động bằng mã PIN 6 số kiểu Kahoot/Mentimeter, và kế hoạch quản trị rủi ro kỹ thuật cùng tối ưu hóa mã nguồn.",
+  "updatedAt":  "2026-10-23T12:49:20.280264668Z",
+  "requestFeedback":  true,
+  "userFacing":  true
+}

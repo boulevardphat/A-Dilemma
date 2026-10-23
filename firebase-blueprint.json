@@ -1,0 +1,122 @@
+{
+  "entities": {
+    "Room": {
+      "title": "Room",
+      "description": "A game session room identified by a 6-digit PIN",
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "6-digit room PIN code"
+        },
+        "status": {
+          "type": "string",
+          "description": "Current round status"
+        },
+        "roundTitle": {
+          "type": "string",
+          "description": "Display title of current round"
+        },
+        "roundDescription": {
+          "type": "string",
+          "description": "Instructions for current round"
+        },
+        "timerTotal": {
+          "type": "number",
+          "description": "Total round timer in seconds"
+        },
+        "timerRemaining": {
+          "type": "number",
+          "description": "Remaining seconds"
+        },
+        "timerRunning": {
+          "type": "boolean",
+          "description": "Whether countdown is active"
+        },
+        "timerStartedAt": {
+          "type": "number",
+          "description": "Timestamp when timer started"
+        },
+        "timerEndsAt": {
+          "type": "number",
+          "description": "Timestamp when timer finishes"
+        },
+        "totalRational": {
+          "type": "number",
+          "description": "Sum of rational votes"
+        },
+        "totalEmotional": {
+          "type": "number",
+          "description": "Sum of emotional votes"
+        },
+        "playerCount": {
+          "type": "number",
+          "description": "Number of participants"
+        },
+        "createdAt": {
+          "type": "number",
+          "description": "Room creation timestamp"
+        },
+        "resetAt": {
+          "type": "number",
+          "description": "Last reset timestamp"
+        }
+      },
+      "required": ["code", "status", "createdAt"]
+    },
+    "Player": {
+      "title": "Player",
+      "description": "A student or team participating in a room",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique client player ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "Student or representative name"
+        },
+        "type": {
+          "type": "string",
+          "description": "individual or team"
+        },
+        "teamName": {
+          "type": "string",
+          "description": "Optional group name"
+        },
+        "avatar": {
+          "type": "string",
+          "description": "8-bit avatar identifier"
+        },
+        "rational": {
+          "type": "number",
+          "description": "Rational allocation (0-100)"
+        },
+        "emotional": {
+          "type": "number",
+          "description": "Emotional allocation (0-100)"
+        },
+        "joinedAt": {
+          "type": "number",
+          "description": "Timestamp when player joined"
+        },
+        "lastActive": {
+          "type": "number",
+          "description": "Heartbeat timestamp"
+        }
+      },
+      "required": ["id", "name", "rational", "emotional"]
+    }
+  },
+  "firestore": {
+    "/rooms/{pin}": {
+      "schema": "Room",
+      "description": "Game room state documents"
+    },
+    "/rooms/{pin}/players/{playerId}": {
+      "schema": "Player",
+      "description": "Player documents participating in a specific room"
+    }
+  }
+}

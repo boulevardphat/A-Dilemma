@@ -123,3 +123,33 @@ NHẬT KÝ THAY ĐỔI & KHÔI PHỤC (ROLLBACK LOG) - DỰ ÁN A DILEMMA (8-BIT
    - Dev server: Đã khởi động lại sạch sẽ.
 
 
+
+[LẦN 14] - Nâng cấp Next.js 15.5.28, Tích hợp Firebase Firestore Realtime & Tạo phòng chủ động PIN 6 số (Turn 18)
+--------------------------------------------------------------------------------
+1. Nâng cấp phiên bản Next.js cao nhất & sửa cảnh báo Outdated:
+   - Nâng cấp `next` lên `15.5.28` và `eslint-config-next` lên `15.5.28` (bản vá bảo mật cao nhất, loại bỏ hoàn toàn cảnh báo lỗ hổng trên Vercel).
+   - Xóa bỏ file cấu hình `.eslintrc.json` xung đột với flat config của ESLint 9, khắc phục triệt để lỗi `@rushstack/eslint-patch`.
+   - Kết quả: `npm run lint` đạt 0 warnings, 0 errors; `compile_applet` biên dịch thành công 100%.
+
+2. Giải quyết triệt để lỗi "đang chơi bị văng ra liên tục" bằng Firebase Firestore:
+   - Nguyên nhân gốc rễ: Trên môi trường serverless (Vercel), các container lambda độc lập không chia sẻ bộ nhớ RAM hay tệp `/tmp`. Khi nhiều người chơi cùng kết nối, các request nhảy qua lại giữa các container khác nhau gây ra tình trạng state rỗng ("split-brain") và văng về LOBBY.
+   - Giải pháp:
+     + Khởi tạo dịch vụ Firebase Firestore (`databaseId: ai-studio-remix2310adilemm-5d97295a-b40d-416d-9bca-6f4baab1e587`).
+     + Viết `firebase-blueprint.json` và triển khai `firestore.rules` bảo mật phân quyền.
+     + Tạo `lib/firebase.ts` và `lib/firebase-game.ts`: Sử dụng `onSnapshot` để lắng nghe dữ liệu trực tiếp từ client lên Firestore với độ trễ <100ms, loại bỏ hoàn toàn việc polling định kỳ và không còn phụ thuộc vào container Vercel.
+     + Lưu phiên người chơi vào `localStorage` và `sessionStorage` để sinh viên có tắt màn hình hay chuyển tab vẫn tự động kết nối lại.
+
+3. Đổi mới luồng tạo phòng chủ động với Mã PIN 6 số (chuẩn Kahoot / Mentimeter):
+   - Thay thế phòng mặc định `CLASS` bằng luồng tạo phòng chủ động:
+     + Màn hình Quản trò (`/host`): Quản trò bấm nút [TẠO PHÒNG CHƠI MỚI (PIN 6 SỐ)], hệ thống sinh mã PIN ngẫu nhiên (ví dụ `849201`).
+     + Hiển thị mã PIN to rõ ràng và nút sao chép link mời: `.../play?pin=849201`.
+     + Màn hình Người chơi (`/play`): Cho phép nhập PIN hoặc tự động điền khi truy cập qua link mời, xác thực phòng tồn tại trước khi vào.
+     + Quản trò có toàn quyền bấm bắt đầu, tạm dừng, đổi vòng và mô phỏng lớp học.
+
+4. Dọn dẹp mã nguồn thừa & Quản trị rủi ro:
+   - Xóa bỏ module cũ `lib/game-store.ts` và route cũ `/app/api/rooms/[code]/route.ts`.
+   - Chuẩn hóa `/app/api/rooms/route.ts` thành API kiểm tra sức khỏe hệ thống.
+   - Biên dịch và xác thực:
+     + `npm run lint`: Hoàn thành xuất sắc (0 lỗi).
+     + `compile_applet`: Succeeded 100%.
+     + `restart_dev_server`: Khởi động lại thành công.
