@@ -42,10 +42,9 @@ export function JoinForm({ onJoin, loading, error }: JoinFormProps) {
   };
 
   return (
-    <div className="w-full max-w-sm mx-auto text-[#18181B] py-6 px-4">
-      {/* Title - Unboxed, clean */}
+    <div className="w-full max-w-sm mx-auto text-[#18181B] py-6 px-4 select-none">
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-extrabold tracking-tight mb-1">
+        <h1 className="text-2xl font-extrabold mb-1">
           A DILEMMA
         </h1>
         <p className="text-xs text-zinc-500 font-medium">
@@ -60,7 +59,6 @@ export function JoinForm({ onJoin, loading, error }: JoinFormProps) {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Input Name */}
         <div>
           <label className="block text-xs font-medium text-zinc-600 mb-1.5">
             Tên của bạn
@@ -75,7 +73,6 @@ export function JoinForm({ onJoin, loading, error }: JoinFormProps) {
           />
         </div>
 
-        {/* Mode Selector */}
         <div>
           <label className="block text-xs font-medium text-zinc-600 mb-1.5">
             Hình thức tham gia
@@ -84,10 +81,10 @@ export function JoinForm({ onJoin, loading, error }: JoinFormProps) {
             <button
               type="button"
               onClick={() => setMode('individual')}
-              className={`pixel-btn py-2 text-xs font-semibold cursor-pointer ${
+              className={`pixel-btn py-2.5 text-xs font-semibold cursor-pointer ${
                 mode === 'individual'
                   ? 'bg-[#18181B] text-white'
-                  : 'bg-white text-[#18181B]'
+                  : 'bg-zinc-200 text-zinc-800 hover:bg-zinc-300'
               }`}
             >
               Cá nhân
@@ -95,10 +92,10 @@ export function JoinForm({ onJoin, loading, error }: JoinFormProps) {
             <button
               type="button"
               onClick={() => setMode('team')}
-              className={`pixel-btn py-2 text-xs font-semibold cursor-pointer ${
+              className={`pixel-btn py-2.5 text-xs font-semibold cursor-pointer ${
                 mode === 'team'
                   ? 'bg-[#18181B] text-white'
-                  : 'bg-white text-[#18181B]'
+                  : 'bg-zinc-200 text-zinc-800 hover:bg-zinc-300'
               }`}
             >
               Đại diện nhóm
@@ -106,7 +103,6 @@ export function JoinForm({ onJoin, loading, error }: JoinFormProps) {
           </div>
         </div>
 
-        {/* Conditional Team Name */}
         {mode === 'team' && (
           <div className="pt-1">
             <label className="block text-xs font-medium text-zinc-600 mb-1.5">
@@ -123,12 +119,11 @@ export function JoinForm({ onJoin, loading, error }: JoinFormProps) {
           </div>
         )}
 
-        {/* Submit Button */}
         <div className="pt-2">
           <button
             type="submit"
             disabled={loading}
-            className="pixel-btn w-full py-3 bg-[#18181B] text-white hover:bg-zinc-800 font-bold text-sm tracking-wide flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            className="pixel-btn w-full py-3.5 bg-[#18181B] text-white hover:bg-zinc-800 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
           >
             <PixelPointerHand className="w-4 h-4 text-amber-400" />
             <span>{loading ? 'Đang kết nối...' : 'VÀO PHÒNG CHƠI'}</span>

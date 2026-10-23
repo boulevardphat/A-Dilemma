@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
 import { ClientRoomState, PlayerMode } from '@/lib/types';
 import { JoinForm } from '@/components/player/JoinForm';
 import { RatioSlider } from '@/components/player/RatioSlider';
@@ -20,7 +19,7 @@ export default function PlayerPage() {
   } | null>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const saved = sessionStorage.getItem('dilemma_player_v4');
+        const saved = sessionStorage.getItem('dilemma_player_v5');
         if (saved) return JSON.parse(saved);
       } catch {
         // ignore
@@ -36,14 +35,24 @@ export default function PlayerPage() {
 
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Polling room state every 1500ms
+  // Polling room state every 1000ms and maintaining connection heartbeat
   useEffect(() => {
     if (!player) return;
     let isMounted = true;
+
     const fetchRoom = async () => {
-      if (typeof document !== 'undefined' && document.hidden) return;
       try {
-        const res = await fetch(`/api/rooms/${DEFAULT_ROOM}?playerId=${player.id}`);
+        const queryParams = new URLSearchParams({
+          playerId: player.id,
+          name: player.name,
+          type: player.type,
+          ...(player.teamName ? { teamName: player.teamName } : {}),
+          t: Date.now().toString(),
+        });
+
+        const res = await fetch(`/api/rooms/${DEFAULT_ROOM}?${queryParams.toString()}`, {
+          cache: 'no-store',
+        });
         if (res.ok && isMounted) {
           const data: ClientRoomState = await res.json();
           setRoomState(data);
@@ -57,7 +66,7 @@ export default function PlayerPage() {
     };
 
     fetchRoom();
-    const interval = setInterval(fetchRoom, 1500);
+    const interval = setInterval(fetchRoom, 1000);
     return () => {
       isMounted = false;
       clearInterval(interval);
@@ -105,7 +114,7 @@ export default function PlayerPage() {
         setLocalRational(data.player.rational);
       }
       if (typeof window !== 'undefined') {
-        sessionStorage.setItem('dilemma_player_v4', JSON.stringify(playerData));
+        sessionStorage.setItem('dilemma_player_v5', JSON.stringify(playerData));
       }
     } catch {
       setJoinError('Lỗi kết nối máy chủ. Vui lòng thử lại.');
@@ -138,7 +147,15 @@ export default function PlayerPage() {
       } catch {
         // silent fail
       }
-    }, 200);
+    }, 150);
+  };
+
+  const handleResetPlayer = () => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('dilemma_player_v5');
+    }
+    setPlayer(null);
+    setRoomState(null);
   };
 
   // 1. If not joined, show clean Join Form
@@ -159,16 +176,22 @@ export default function PlayerPage() {
           teamName={player.teamName}
           rational={localRational}
           emotional={100 - localRational}
+          onResetPlayer={handleResetPlayer}
         />
       </main>
     );
   }
 
   // Tilt angle for local scale
-  const localTilt = Math.round(((100 - localRational - localRational) / 100) * 25 * 10) / 10;
+  const localTilt = Math.round(((100 - localRational - localRational) / 100) * 16 * 10) / 10;
   const mins = Math.floor((roomState?.timerRemaining || 0) / 60);
   const secs = (roomState?.timerRemaining || 0) % 60;
   const timerStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+  const isTwistWaiting =
+    (roomState?.status === 'TWIST_1' || roomState?.status === 'TWIST_2') &&
+    !roomState?.timerRunning &&
+    roomState?.twist !== null;
 
   return (
     <main className="min-h-screen relative flex flex-col items-center justify-between p-4 sm:p-6 bg-[#FBF9F5]">
@@ -183,8 +206,8 @@ export default function PlayerPage() {
       </div>
 
       <div className="w-full max-w-xl mx-auto my-auto py-2">
-        {/* Full screen Breaking News if active on player and timer hasn't started */}
-        {roomState?.twist && !roomState.timerRunning && (
+        {/* Full screen Breaking News when twist occurs, dismissed when host starts timer */}
+        {isTwistWaiting && roomState?.twist && (
           <PixelBreakingNews
             twist={roomState.twist}
             timerRunning={roomState.timerRunning}
@@ -193,7 +216,7 @@ export default function PlayerPage() {
 
         {/* LOBBY VIEW - Clean, unboxed waiting room */}
         {roomState?.status === 'LOBBY' && (
-          <div className="text-center py-12 px-2 animate-fadeIn">
+          <div className="text-center py-10 px-2 animate-fadeIn">
             <h2 className="text-xl font-bold text-[#18181B] mb-2">
               đã sẵn sàng: {player.teamName ? `${player.teamName} (${player.name})` : player.name}
             </h2>
@@ -201,7 +224,7 @@ export default function PlayerPage() {
               chờ quản trò bấm bắt đầu chơi trên màn hình chính...
             </p>
 
-            <div className="text-left text-xs text-zinc-700 leading-relaxed max-w-sm mx-auto my-6 p-4 bg-white border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B]">
+            <div className="text-left text-xs text-zinc-700 leading-relaxed max-w-sm mx-auto my-6 p-4 bg-white/80">
               <div className="font-bold text-zinc-900 mb-1">TÌNH HUỐNG GIẢ ĐỊNH:</div>
               Có 2 bệnh nhân nhiễm bệnh đang chuyển biến tiêu cực. Bạn nắm trong tay 100 Giá Đại lộ để lựa chọn giữa:
               <div className="mt-2 space-y-1">
@@ -222,7 +245,7 @@ export default function PlayerPage() {
             {/* BIG CENTERED TIMER - Placed directly above the scale */}
             <div className="text-center mb-1">
               <div
-                className={`font-mono text-4xl sm:text-5xl font-black tracking-tight ${
+                className={`font-mono text-4xl sm:text-5xl font-black ${
                   roomState.timerRunning && roomState.timerRemaining <= 10
                     ? 'text-red-600 animate-pulse'
                     : 'text-[#18181B]'

@@ -17,15 +17,14 @@ const DEFAULT_ROOM = 'CLASS';
 
 export default function HostPage() {
   const [roomState, setRoomState] = useState<ClientRoomState | null>(null);
-  const [showBreakingModal, setShowBreakingModal] = useState(false);
 
-  // Poll room state every 1500ms
   useEffect(() => {
     let isMounted = true;
     const fetchRoom = async () => {
-      if (typeof document !== 'undefined' && document.hidden) return;
       try {
-        const res = await fetch(`/api/rooms/${DEFAULT_ROOM}`);
+        const res = await fetch(`/api/rooms/${DEFAULT_ROOM}?t=${Date.now()}`, {
+          cache: 'no-store',
+        });
         if (res.ok && isMounted) {
           const data: ClientRoomState = await res.json();
           setRoomState(data);
@@ -36,7 +35,7 @@ export default function HostPage() {
     };
 
     fetchRoom();
-    const interval = setInterval(fetchRoom, 1500);
+    const interval = setInterval(fetchRoom, 1000);
     return () => {
       isMounted = false;
       clearInterval(interval);
@@ -61,45 +60,20 @@ export default function HostPage() {
     }
   };
 
-  const handleStepClick = (step: number) => {
-    if (step === 1) {
-      performAction('set_round', { round: 'ROUND_1' });
-      performAction('toggle_timer', { start: true });
-      setShowBreakingModal(false);
-    } else if (step === 2) {
-      performAction('set_round', { round: 'TWIST_1' });
-      setShowBreakingModal(true);
-    } else if (step === 3) {
-      performAction('set_round', { round: 'TWIST_2' });
-      setShowBreakingModal(true);
-    } else if (step === 4) {
-      performAction('set_round', { round: 'THANK_YOU' });
-      setShowBreakingModal(false);
-    }
+  const handleStartGame = () => {
+    performAction('continue');
   };
 
-  const handleHostStartTimer = () => {
-    performAction('toggle_timer', { start: true });
-    setShowBreakingModal(false);
+  const handleContinueNextTwist = () => {
+    performAction('continue');
   };
-
-  const currentStep =
-    roomState?.status === 'ROUND_1'
-      ? 1
-      : roomState?.status === 'TWIST_1'
-      ? 2
-      : roomState?.status === 'TWIST_2'
-      ? 3
-      : roomState?.status === 'THANK_YOU'
-      ? 4
-      : 0;
 
   const mins = Math.floor((roomState?.timerRemaining || 0) / 60);
   const secs = (roomState?.timerRemaining || 0) % 60;
   const timerStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 
   // 1. GIAO DIỆN PHÒNG CHỜ CỦA QUẢN TRÒ (HOST WAITING LOBBY)
-  if (roomState?.status === 'LOBBY') {
+  if (!roomState || roomState.status === 'LOBBY') {
     return (
       <main className="min-h-screen relative flex flex-col justify-between p-6 sm:p-10 select-none bg-[#FBF9F5]">
         {/* Top subtle info */}
@@ -112,7 +86,7 @@ export default function HostPage() {
 
         {/* Central Waiting Lobby Content */}
         <div className="w-full max-w-2xl mx-auto text-center my-auto py-8">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#18181B] tracking-tight mb-2">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#18181B] mb-2">
             PHÒNG CHỜ LỚP HỌC
           </h1>
           <p className="text-sm text-zinc-600 mb-8 font-medium">
@@ -121,16 +95,16 @@ export default function HostPage() {
 
           {/* Connected Count */}
           <div className="text-base font-bold text-[#18181B] mb-4">
-            Đã kết nối: {roomState.playerCount} người / nhóm
+            Đã kết nối: {roomState?.playerCount || 0} người / nhóm
           </div>
 
-          {/* Connected Students List */}
-          <div className="min-h-[140px] max-h-60 overflow-y-auto flex flex-wrap justify-center gap-2 p-4 bg-white border-2 border-[#18181B] mb-8 shadow-[3px_3px_0px_#18181B]">
-            {roomState.playersList && roomState.playersList.length > 0 ? (
+          {/* Connected Students List - Borderless clean tags */}
+          <div className="min-h-[140px] max-h-60 overflow-y-auto flex flex-wrap justify-center gap-2 p-4 bg-white/70 mb-8">
+            {roomState?.playersList && roomState.playersList.length > 0 ? (
               roomState.playersList.map((p) => (
                 <div
                   key={p.id}
-                  className="px-3 py-1.5 bg-[#FBF9F5] border border-[#18181B] text-xs font-semibold flex items-center gap-1.5"
+                  className="px-3 py-1.5 bg-zinc-100 text-xs font-semibold flex items-center gap-1.5"
                 >
                   {p.type === 'team' ? (
                     <PixelTeam className="w-3.5 h-3.5 text-emerald-600" />
@@ -147,21 +121,21 @@ export default function HostPage() {
             )}
           </div>
 
-          {/* Big Start Button */}
+          {/* Start Button - Completely borderless */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
               type="button"
-              onClick={() => handleStepClick(1)}
-              className="pixel-btn w-full sm:w-auto px-8 py-4 bg-[#18181B] text-white hover:bg-zinc-800 font-extrabold text-base tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-[3px_3px_0px_#18181B]"
+              onClick={handleStartGame}
+              className="pixel-btn w-full sm:w-auto px-8 py-4 bg-[#18181B] text-white hover:bg-zinc-800 font-extrabold text-base tracking-wider flex items-center justify-center gap-2 cursor-pointer"
             >
               <PixelPointerHand className="w-5 h-5 text-amber-400" />
-              <span>BẮT ĐẦU CHƠI (VÒNG 1 - 60S)</span>
+              <span>BẮT ĐẦU CHƠI (60S)</span>
             </button>
 
             <button
               type="button"
               onClick={() => performAction('simulate', { count: 12 })}
-              className="pixel-btn w-full sm:w-auto px-4 py-3.5 bg-white text-zinc-700 hover:text-black text-xs font-bold cursor-pointer"
+              className="pixel-btn w-full sm:w-auto px-4 py-3.5 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 text-xs font-bold cursor-pointer"
               title="Tự động thêm 12 sinh viên ảo để kiểm thử"
             >
               Mô phỏng lớp học ảo
@@ -177,7 +151,12 @@ export default function HostPage() {
     );
   }
 
-  // 2. GIAO DIỆN QUẢN TRÒ ĐANG CHƠI (ACTIVE PLAY VIEW)
+  // 2. GIAO DIỆN QUẢN TRÒ ĐANG CHƠI (TỰ ĐỘNG CHUYỂN VÒNG THEO TIẾN TRÌNH)
+  const isTwistWaitingToStart =
+    (roomState.status === 'TWIST_1' || roomState.status === 'TWIST_2') &&
+    !roomState.timerRunning &&
+    roomState.twist !== null;
+
   return (
     <main className="min-h-screen relative flex flex-col justify-between p-6 select-none bg-[#FBF9F5]">
       {/* Top Left info: unboxed, subtle, lowercase */}
@@ -185,11 +164,20 @@ export default function HostPage() {
         <Link href="/" className="hover:text-black">
           a dilemma
         </Link>{' '}
-        · môn lịch sử báo chí · {roomState?.playerCount || 0} người tham gia
+        · môn lịch sử báo chí · {roomState.playerCount} người tham gia
       </div>
 
-      {/* Top Right Reset button */}
-      <div className="absolute top-5 right-6 flex items-center gap-2">
+      {/* Top Right Controls */}
+      <div className="absolute top-5 right-6 flex items-center gap-4">
+        {roomState.status !== 'THANK_YOU' && (
+          <button
+            type="button"
+            onClick={() => performAction('toggle_timer', { start: !roomState.timerRunning })}
+            className="text-xs text-zinc-600 hover:text-black font-medium"
+          >
+            {roomState.timerRunning ? 'Tạm dừng đồng hồ' : 'Tiếp tục đếm'}
+          </button>
+        )}
         <button
           type="button"
           onClick={() => {
@@ -203,12 +191,12 @@ export default function HostPage() {
         </button>
       </div>
 
-      {/* Full screen Breaking News modal for Host */}
-      {showBreakingModal && roomState?.twist && (
+      {/* Breaking News Modal for Host with TIẾP TỤC (30S) button */}
+      {isTwistWaitingToStart && roomState.twist && (
         <PixelBreakingNews
           twist={roomState.twist}
           isHost={true}
-          onHostStartTimer={handleHostStartTimer}
+          onHostStartTimer={handleContinueNextTwist}
           timerRunning={roomState.timerRunning}
         />
       )}
@@ -216,11 +204,19 @@ export default function HostPage() {
       {/* CENTER HERO STAGE: Giant Timer + Giant Scale */}
       <div className="flex-1 flex flex-col items-center justify-center my-auto py-2">
         <div className="w-full max-w-4xl text-center">
+          {/* Round status indicator */}
+          <div className="text-xs uppercase tracking-wider text-zinc-500 font-bold mb-2">
+            {roomState.status === 'ROUND_1' && 'Vòng 1: Tình huống gốc (60s)'}
+            {roomState.status === 'TWIST_1' && 'Vòng 2: Breaking News 1 (30s)'}
+            {roomState.status === 'TWIST_2' && 'Vòng 3: Breaking News 2 (30s)'}
+            {roomState.status === 'THANK_YOU' && 'Kết thúc: Tổng kết kết quả'}
+          </div>
+
           {/* BIG CENTERED TIMER - Placed directly above the scale */}
           <div className="mb-2">
             <div
-              className={`font-mono text-5xl sm:text-6xl md:text-7xl font-black tracking-tight ${
-                roomState?.timerRunning && (roomState?.timerRemaining || 0) <= 10
+              className={`font-mono text-5xl sm:text-6xl md:text-7xl font-black ${
+                roomState.timerRunning && roomState.timerRemaining <= 10
                   ? 'text-red-600 animate-pulse'
                   : 'text-[#18181B]'
               }`}
@@ -228,9 +224,9 @@ export default function HostPage() {
               {timerStr}
             </div>
             <div className="text-xs text-zinc-500 font-medium mt-1">
-              {roomState?.timerRunning
+              {roomState.timerRunning
                 ? 'Đang đếm ngược...'
-                : roomState?.status === 'THANK_YOU'
+                : roomState.status === 'THANK_YOU'
                 ? 'Đã kết thúc'
                 : 'Tạm dừng'}
             </div>
@@ -238,9 +234,9 @@ export default function HostPage() {
 
           {/* MAIN GIANT PHYSICAL SCALE */}
           <PixelScale
-            rationalAmount={roomState?.totalRational || 0}
-            emotionalAmount={roomState?.totalEmotional || 0}
-            tiltAngle={roomState?.tiltAngle || 0}
+            rationalAmount={roomState.totalRational}
+            emotionalAmount={roomState.totalEmotional}
+            tiltAngle={roomState.tiltAngle}
             size="lg"
             showCoins
           />
@@ -253,10 +249,10 @@ export default function HostPage() {
                 <span className="text-sm font-bold uppercase tracking-wider">LÝ TRÍ</span>
               </div>
               <div className="text-3xl sm:text-4xl font-black text-[#18181B]">
-                {roomState?.percentRational || 50}%
+                {roomState.percentRational}%
               </div>
               <div className="text-xs text-zinc-500 font-mono mt-0.5">
-                {roomState?.totalRational || 0} Giá
+                {roomState.totalRational} Giá
               </div>
             </div>
 
@@ -268,24 +264,24 @@ export default function HostPage() {
                 <span className="text-sm font-bold uppercase tracking-wider">TÌNH CẢM</span>
               </div>
               <div className="text-3xl sm:text-4xl font-black text-[#18181B]">
-                {roomState?.percentEmotional || 50}%
+                {roomState.percentEmotional}%
               </div>
               <div className="text-xs text-zinc-500 font-mono mt-0.5">
-                {roomState?.totalEmotional || 0} Giá
+                {roomState.totalEmotional} Giá
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Post-game Summary (Appears after locking round 4) - Unboxed, secondary emphasis */}
-      {currentStep === 4 && (
+      {/* Post-game Summary (Appears after reaching THANK_YOU) - Unboxed, secondary emphasis */}
+      {roomState.status === 'THANK_YOU' ? (
         <div className="w-full max-w-xl mx-auto my-3 text-center animate-fadeIn">
-          <div className="text-xs text-zinc-500 font-medium mb-2">
-            cảm ơn bạn đã tham gia · số liệu biến động 3 vòng
+          <div className="text-xs text-zinc-500 font-medium mb-3">
+            cảm ơn bạn đã tham gia · biến động qua 3 vòng
           </div>
-          <div className="flex items-center justify-center gap-8 text-xs text-zinc-700">
-            {roomState?.history?.map((h, i) => (
+          <div className="flex items-center justify-center gap-8 text-xs text-zinc-700 mb-4">
+            {roomState.history?.map((h, i) => (
               <div key={i} className="text-center">
                 <div className="text-[11px] text-zinc-400">
                   {i === 0 ? 'Vòng 1' : i === 1 ? 'Twist 1' : 'Twist 2'}
@@ -296,53 +292,23 @@ export default function HostPage() {
               </div>
             ))}
           </div>
+
+          <button
+            type="button"
+            onClick={() => performAction('reset')}
+            className="pixel-btn px-6 py-2.5 bg-[#18181B] text-white hover:bg-zinc-800 text-xs font-bold cursor-pointer"
+          >
+            Bắt đầu lại từ đầu
+          </button>
+        </div>
+      ) : (
+        /* Progress Info - Clean, subtle info without 1, 2, 3, 4 buttons */
+        <div className="text-center text-xs text-zinc-400 py-2">
+          {roomState.status === 'ROUND_1' && 'hết 60s sẽ tự động mở breaking news 1'}
+          {roomState.status === 'TWIST_1' && 'hết 30s sẽ tự động mở breaking news 2'}
+          {roomState.status === 'TWIST_2' && 'hết 30s sẽ tự động tổng kết kết quả'}
         </div>
       )}
-
-      {/* BOTTOM CONTROLLER DOCK: Minimalist buttons 1 2 3 4 with 8-bit pointer hand */}
-      <div className="flex flex-col items-center justify-center pb-2">
-        <div className="flex items-center gap-4">
-          {[1, 2, 3, 4].map((step) => {
-            const isActive = currentStep === step;
-            return (
-              <div key={step} className="flex flex-col items-center">
-                {isActive ? (
-                  <div className="mb-1 animate-bounce">
-                    <PixelPointerHand className="w-4 h-4 text-[#18181B]" />
-                  </div>
-                ) : (
-                  <div className="w-4 h-4 mb-1" />
-                )}
-                <button
-                  type="button"
-                  onClick={() => handleStepClick(step)}
-                  className={`pixel-btn w-12 h-12 flex items-center justify-center font-mono text-lg font-bold cursor-pointer ${
-                    isActive
-                      ? 'bg-[#18181B] text-white shadow-[3px_3px_0px_#18181B]'
-                      : 'bg-white text-[#18181B] hover:bg-zinc-100 shadow-[2px_2px_0px_#18181B]'
-                  }`}
-                  title={
-                    step === 1
-                      ? '1: Bắt đầu Vòng 1 (60s)'
-                      : step === 2
-                      ? '2: Breaking News 1 (30s)'
-                      : step === 3
-                      ? '3: Breaking News 2 (30s)'
-                      : '4: Khóa cân & Kết thúc'
-                  }
-                >
-                  {step}
-                </button>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Quiet subtext for Host */}
-        <div className="mt-3 text-[11px] text-zinc-400 font-medium">
-          1: tình huống gốc · 2: breaking news 1 · 3: breaking news 2 · 4: kết thúc
-        </div>
-      </div>
     </main>
   );
 }

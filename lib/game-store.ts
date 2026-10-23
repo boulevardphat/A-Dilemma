@@ -1,6 +1,5 @@
 import { GameRoom, Player, RoundType, TwistInfo, ClientRoomState, RoundHistoryEntry } from './types';
 
-// In-memory global store to hold active rooms across route requests
 const globalForRooms = globalThis as unknown as {
   __GAME_ROOMS__?: Map<string, GameRoom>;
 };
@@ -16,7 +15,7 @@ export const TWISTS: Record<1 | 2, TwistInfo> = {
     id: 1,
     title: 'BREAKING NEWS 01: DANH TÍNH 2 BỆNH NHÂN',
     headline: 'TIẾT LỘ QUÁ KHỨ BẤT NGỜ CỦA HAI NGƯỜI BỆNH',
-    details: 'Bệnh nhân 1 là người phạm pháp nhiều lần vừa mới mãn hạn tù. Trong khi đó, Bệnh nhân 2 là một sinh viên nghèo hiếu học với thành tích học tập xuất sắc.',
+    details: 'Báo chí vừa xác minh: Bệnh nhân 1 là người phạm pháp nhiều lần vừa mới mãn hạn tù. Trong khi đó, Bệnh nhân 2 là một sinh viên nghèo hiếu học với thành tích xuất sắc.',
     highlightText: 'BN1: Tiền án tiền sự, vừa ra tù | BN2: Sinh viên nghèo, thành tích xuất sắc',
     duration: 30,
   },
@@ -58,18 +57,14 @@ export const ROUND_INFO: Record<RoundType, { title: string; description: string;
   },
 };
 
-// Calculate physical scale tilt angle (-25 deg to +25 deg)
 export function calculateTiltAngle(totalRational: number, totalEmotional: number): number {
   const total = totalRational + totalEmotional;
   if (total === 0) return 0;
-  // If emotional > rational, tilt positive (clockwise/right down)
-  // If rational > emotional, tilt negative (counter-clockwise/left down)
   const diff = totalEmotional - totalRational;
-  const ratio = diff / total; // -1 to +1
+  const ratio = diff / total;
   return Math.round(ratio * 25 * 10) / 10;
 }
 
-// Initialize default room
 export function getOrCreateRoom(code: string = 'CLASS'): GameRoom {
   const normalizedCode = (code || 'CLASS').trim().toUpperCase();
   let room = rooms.get(normalizedCode);
@@ -92,22 +87,6 @@ export function getOrCreateRoom(code: string = 'CLASS'): GameRoom {
     rooms.set(normalizedCode, room);
   }
   return room;
-}
-
-// Update timer state based on current time
-export function syncRoomTimer(room: GameRoom): void {
-  if (room.timerRunning && room.timerEndsAt) {
-    const now = Date.now();
-    const remainingMs = Math.max(0, room.timerEndsAt - now);
-    room.timerRemaining = Math.ceil(remainingMs / 1000);
-
-    if (remainingMs <= 0) {
-      room.timerRunning = false;
-      room.timerRemaining = 0;
-      // Record history on timeout if not recorded
-      recordRoundHistory(room);
-    }
-  }
 }
 
 export function recordRoundHistory(room: GameRoom): void {
@@ -134,6 +113,48 @@ export function recordRoundHistory(room: GameRoom): void {
     Object.assign(existing, entry);
   } else {
     room.history.push(entry);
+  }
+}
+
+export function syncRoomTimer(room: GameRoom): void {
+  if (room.timerRunning && room.timerEndsAt) {
+    const now = Date.now();
+    const remainingMs = Math.max(0, room.timerEndsAt - now);
+    room.timerRemaining = Math.ceil(remainingMs / 1000);
+
+    if (remainingMs <= 0) {
+      room.timerRunning = false;
+      room.timerRemaining = 0;
+      room.timerStartedAt = null;
+      room.timerEndsAt = null;
+      recordRoundHistory(room);
+
+      if (room.status === 'ROUND_1') {
+        room.status = 'TWIST_1';
+        room.roundTitle = ROUND_INFO.TWIST_1.title;
+        room.roundDescription = ROUND_INFO.TWIST_1.description;
+        room.twist = TWISTS[1];
+        room.timerTotal = 30;
+        room.timerRemaining = 30;
+        room.timerRunning = false;
+      } else if (room.status === 'TWIST_1') {
+        room.status = 'TWIST_2';
+        room.roundTitle = ROUND_INFO.TWIST_2.title;
+        room.roundDescription = ROUND_INFO.TWIST_2.description;
+        room.twist = TWISTS[2];
+        room.timerTotal = 30;
+        room.timerRemaining = 30;
+        room.timerRunning = false;
+      } else if (room.status === 'TWIST_2') {
+        room.status = 'THANK_YOU';
+        room.roundTitle = ROUND_INFO.THANK_YOU.title;
+        room.roundDescription = ROUND_INFO.THANK_YOU.description;
+        room.twist = null;
+        room.timerTotal = 0;
+        room.timerRemaining = 0;
+        room.timerRunning = false;
+      }
+    }
   }
 }
 
@@ -216,12 +237,42 @@ export function submitVote(roomCode: string, playerId: string, rational: number)
   const player = room.players[playerId];
   if (!player) return false;
 
-  // Validate: between 0 and 100, multiple of 10
   const clampedRational = Math.max(0, Math.min(100, Math.round(rational / 10) * 10));
   player.rational = clampedRational;
   player.emotional = 100 - clampedRational;
   player.lastActive = Date.now();
   return true;
+}
+
+export function continueRound(roomCode: string): GameRoom {
+  const room = getOrCreateRoom(roomCode);
+  syncRoomTimer(room);
+
+  if (room.status === 'LOBBY') {
+    room.status = 'ROUND_1';
+    room.roundTitle = ROUND_INFO.ROUND_1.title;
+    room.roundDescription = ROUND_INFO.ROUND_1.description;
+    room.twist = null;
+    room.timerTotal = 60;
+    room.timerRemaining = 60;
+    room.timerRunning = true;
+    room.timerStartedAt = Date.now();
+    room.timerEndsAt = Date.now() + 60 * 1000;
+  } else if (room.status === 'TWIST_1') {
+    room.timerTotal = 30;
+    room.timerRemaining = 30;
+    room.timerRunning = true;
+    room.timerStartedAt = Date.now();
+    room.timerEndsAt = Date.now() + 30 * 1000;
+  } else if (room.status === 'TWIST_2') {
+    room.timerTotal = 30;
+    room.timerRemaining = 30;
+    room.timerRunning = true;
+    room.timerStartedAt = Date.now();
+    room.timerEndsAt = Date.now() + 30 * 1000;
+  }
+
+  return room;
 }
 
 export function setRound(roomCode: string, targetRound: RoundType): GameRoom {
@@ -252,13 +303,12 @@ export function triggerTimer(roomCode: string, start: boolean): GameRoom {
   const room = getOrCreateRoom(roomCode);
   if (start) {
     if (room.timerRemaining <= 0) {
-      room.timerRemaining = room.timerTotal || 60;
+      room.timerRemaining = room.timerTotal || 30;
     }
     room.timerRunning = true;
     room.timerStartedAt = Date.now();
     room.timerEndsAt = Date.now() + room.timerRemaining * 1000;
   } else {
-    // Pause
     syncRoomTimer(room);
     room.timerRunning = false;
     room.timerStartedAt = null;
@@ -280,7 +330,6 @@ export function resetGame(roomCode: string): GameRoom {
   room.twist = null;
   room.history = [];
 
-  // Reset players vote to 50:50
   for (const player of Object.values(room.players)) {
     player.rational = 50;
     player.emotional = 50;
@@ -288,8 +337,7 @@ export function resetGame(roomCode: string): GameRoom {
   return room;
 }
 
-// Seed sample students for demo mode
-export function simulateClassVotes(roomCode: string, count: number = 18): void {
+export function simulateClassVotes(roomCode: string, count: number = 12): void {
   const room = getOrCreateRoom(roomCode);
   const sampleNames = [
     { name: 'Minh Hoàng', type: 'individual' as const, avatar: 'pen' },
@@ -303,24 +351,18 @@ export function simulateClassVotes(roomCode: string, count: number = 18): void {
     { name: 'Quốc Bảo', type: 'individual' as const, avatar: 'lens' },
     { name: 'Thùy Chi', type: 'individual' as const, avatar: 'radio' },
     { name: 'Nhóm Độc Lập', type: 'team' as const, teamName: 'Nhóm Độc Lập', avatar: 'press' },
-    { name: 'Văn Nam', type: 'individual' as const, avatar: 'pen' },
     { name: 'Phương Linh', type: 'individual' as const, avatar: 'typewriter' },
-    { name: 'Nhóm Góc Nhìn Đa Chiều', type: 'team' as const, teamName: 'Nhóm Góc Nhìn Đa Chiều', avatar: 'press' },
   ];
 
   sampleNames.slice(0, count).forEach((item, index) => {
     const id = `demo_student_${index + 1}`;
     let rational = 50;
 
-    // Simulate natural shifts based on round
     if (room.status === 'ROUND_1') {
-      // Slight emotional bias initially
       rational = Math.random() > 0.4 ? 40 : 60;
     } else if (room.status === 'TWIST_1') {
-      // Outrage against ex-convict -> tilts heavily towards Student (BN2 - Emotional / Caring for student)
       rational = Math.random() > 0.25 ? 20 : 30;
     } else if (room.status === 'TWIST_2') {
-      // Vaccine potential flips mind -> swings towards Rational (Curing BN1 for vaccine)
       rational = Math.random() > 0.2 ? 80 : 70;
     }
 

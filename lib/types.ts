@@ -1,18 +1,6 @@
-export type RoundType = 'LOBBY' | 'ROUND_1' | 'TWIST_1' | 'TWIST_2' | 'THANK_YOU';
-
 export type PlayerMode = 'individual' | 'team';
 
-export interface Player {
-  id: string;
-  name: string;
-  type: PlayerMode;
-  teamName?: string;
-  rational: number; // 0 to 100 in steps of 10
-  emotional: number; // 100 - rational
-  avatar: string;
-  joinedAt: number;
-  lastActive: number;
-}
+export type RoundType = 'LOBBY' | 'ROUND_1' | 'TWIST_1' | 'TWIST_2' | 'THANK_YOU';
 
 export interface TwistInfo {
   id: 1 | 2;
@@ -20,7 +8,19 @@ export interface TwistInfo {
   headline: string;
   details: string;
   highlightText: string;
-  duration: number; // in seconds
+  duration: number; // seconds
+}
+
+export interface Player {
+  id: string;
+  name: string;
+  type: PlayerMode;
+  teamName?: string;
+  avatar?: string;
+  rational: number; // 0 to 100
+  emotional: number; // 0 to 100
+  joinedAt: number;
+  lastActive: number;
 }
 
 export interface RoundHistoryEntry {
@@ -70,14 +70,14 @@ export interface ClientRoomState {
     rational: number;
     emotional: number;
   };
-  playersList?: {
+  playersList?: Array<{
     id: string;
     name: string;
     type: PlayerMode;
     teamName?: string;
-    avatar: string;
+    avatar?: string;
     rational: number;
     emotional: number;
-  }[];
-  history: RoundHistoryEntry[];
+  }>;
+  history?: RoundHistoryEntry[];
 }

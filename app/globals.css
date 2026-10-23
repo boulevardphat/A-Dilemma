@@ -1,44 +1,62 @@
 @import "tailwindcss";
 
-@layer utilities {
-  /* Boxed pixel buttons only */
-  .pixel-btn {
-    border: 2px solid #18181B;
-    box-shadow: 2px 2px 0px #18181B;
-    transition: transform 0.1s ease, box-shadow 0.1s ease;
-  }
-
-  .pixel-btn:hover {
-    box-shadow: 3px 3px 0px #18181B;
-  }
-
-  .pixel-btn:active {
-    transform: translate(1px, 1px);
-    box-shadow: 1px 1px 0px #18181B;
-  }
-
-  .pixel-input {
-    border: 2px solid #18181B;
-    background-color: #FFFFFF;
-    color: #18181B;
-    outline: none;
-  }
-
-  .pixel-input:focus {
-    box-shadow: 2px 2px 0px #18181B;
-  }
+@font-face {
+  font-family: 'KVN97';
+  src: url('/kvn-97.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
 }
 
-/* Light newsprint background with subtle texture */
+* {
+  font-family: 'KVN97', monospace, sans-serif !important;
+}
+
 body {
   background-color: #FBF9F5;
   color: #18181B;
+  font-family: 'KVN97', monospace, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea {
+  font-family: 'KVN97', monospace, sans-serif !important;
+}
+
+@layer utilities {
+  /* Clean borderless buttons as requested - No ugly thick borders or box-shadows */
+  .pixel-btn {
+    border: none !important;
+    outline: none;
+    transition: transform 0.1s ease, opacity 0.1s ease, background-color 0.15s ease;
+  }
+
+  .pixel-btn:hover {
+    opacity: 0.92;
+  }
+
+  .pixel-btn:active {
+    transform: translateY(1px);
+    opacity: 0.85;
+  }
+
+  .pixel-input {
+    border: 1px solid #D4D4D8;
+    background-color: #FFFFFF;
+    color: #18181B;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+
+  .pixel-input:focus {
+    border-color: #18181B;
+  }
 }
 
 /* Custom minimal scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;

@@ -17,3 +17,27 @@ NHẬT KÝ THAY ĐỔI & KHÔI PHỤC (ROLLBACK LOG) - DỰ ÁN A DILEMMA (8-BIT
   + ESLint: 0 errors, 0 warnings.
   + Build (compile_applet): Succeeded 100%.
   + Server: Đã khởi động lại sạch sẽ.
+
+[LẦN 7] - Tích hợp font KVN97, bỏ border nút bấm, tự động chuyển vòng và đồng bộ phòng học (Turn 10)
+--------------------------------------------------------------------------------
+1. Khắc phục kết nối người chơi (/play) và màn hình Quản trò (/host):
+   - Bổ sung cơ chế Heartbeat đồng bộ tức thì trên GET /api/rooms/[code] với tham số playerId, name, type, teamName.
+   - Khi người chơi truy cập hoặc refresh lại trình duyệt, server tự động tái đăng ký người chơi vào room.players ngay lập tức, khắc phục triệt để tình trạng người chơi đã vào nhưng Host không thấy.
+   - Chu kỳ polling giảm xuống 1000ms giúp danh sách người tham gia cập nhật gần như thời gian thực.
+2. Tích hợp Font chữ 8-bit hỗ trợ tiếng Việt (KVN-97):
+   - Loại bỏ hoàn toàn font Plus_Jakarta_Sans trong app/layout.tsx.
+   - Khai báo @font-face trong app/globals.css trỏ tới file /kvn-97.ttf (font KVN97 kích thước 239KB).
+   - Áp dụng font KVN97 chuẩn pixel 8-bit cho toàn bộ hệ thống: html, body, button, input, textarea, heading, timer, labels.
+3. Bỏ toàn bộ viền (border) trên nút bấm:
+   - Cập nhật class .pixel-btn: border: none !important, bỏ shadow 2px đen thô cứng, chuyển sang phong cách phẳng tinh tế, sạch sẽ.
+   - Thao tác hover giảm opacity 0.92, active translate-y-1.
+   - Tinh chỉnh các nút trong JoinForm, RatioSlider, ThankYouScreen, BreakingNews, Host và Home.
+4. Tự động hóa tiến trình chuyển vòng (Auto-Progression):
+   - Bỏ hoàn toàn cụm 4 nút bấm thủ công 1, 2, 3, 4 ở giao diện Quản trò.
+   - Cơ chế tự động trong syncRoomTimer:
+     + Khi hết 60s Vòng 1 -> Tự động kích hoạt Breaking News 1 (trạng thái TWIST_1, tạm dừng đếm).
+     + Quản trò chỉ cần bấm một nút duy nhất: [TIẾP TỤC (30S)].
+     + Khi Quản trò bấm TIẾP TỤC, đồng hồ 30s bắt đầu đếm ngược cho người chơi điều chỉnh lại cán cân.
+     + Khi hết 30s Twist 1 -> Tự động kích hoạt Breaking News 2 (trạng thái TWIST_2, tạm dừng đếm).
+     + Quản trò bấm [TIẾP TỤC (30S)] -> Đếm ngược 30s cuối cùng.
+     + Khi hết 30s Twist 2 -> Tự động chuyển sang màn hình Hoàn thành & Tổng kết (THANK_YOU) với dòng "CẢM ƠN BẠN ĐÃ THAM GIA".

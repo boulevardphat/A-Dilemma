@@ -6,10 +6,13 @@ import {
   submitVote,
   setRound,
   triggerTimer,
+  continueRound,
   resetGame,
   simulateClassVotes,
 } from '@/lib/game-store';
 import { RoundType } from '@/lib/types';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   req: NextRequest,
@@ -18,8 +21,21 @@ export async function GET(
   const { code } = await params;
   const url = new URL(req.url);
   const playerId = url.searchParams.get('playerId') || undefined;
+  const playerName = url.searchParams.get('name') || undefined;
+  const playerType = (url.searchParams.get('type') as 'individual' | 'team') || 'individual';
+  const teamName = url.searchParams.get('teamName') || undefined;
 
   const room = getOrCreateRoom(code);
+
+  if (playerId && playerName && !room.players[playerId]) {
+    joinPlayer(code, {
+      id: playerId,
+      name: playerName,
+      type: playerType,
+      teamName,
+    });
+  }
+
   const clientState = getClientState(room, playerId);
 
   return NextResponse.json(clientState, {
@@ -61,6 +77,15 @@ export async function POST(
         return NextResponse.json({
           success: ok,
           room: getClientState(room, body.playerId),
+        });
+      }
+
+      case 'continue':
+      case 'continue_round': {
+        continueRound(code);
+        return NextResponse.json({
+          success: true,
+          room: getClientState(room),
         });
       }
 

@@ -19,7 +19,7 @@ export function RatioSlider({ rational, onChange, disabled = false }: RatioSlide
         <div className="flex items-center gap-2">
           <PixelBrain className="w-6 h-6 text-blue-600 shrink-0" />
           <div>
-            <div className="text-base sm:text-lg font-black text-blue-700 tracking-tight">
+            <div className="text-base sm:text-lg font-black text-blue-700">
               {rational} GIÁ
             </div>
             <div className="text-xs text-zinc-600 font-medium">Lý trí (Trị dứt điểm 1 người)</div>
@@ -30,7 +30,7 @@ export function RatioSlider({ rational, onChange, disabled = false }: RatioSlide
 
         <div className="flex items-center gap-2 text-right">
           <div>
-            <div className="text-base sm:text-lg font-black text-red-600 tracking-tight">
+            <div className="text-base sm:text-lg font-black text-red-600">
               {emotional} GIÁ
             </div>
             <div className="text-xs text-zinc-600 font-medium">Tình cảm (Trị cầm chừng cả 2)</div>
@@ -39,7 +39,7 @@ export function RatioSlider({ rational, onChange, disabled = false }: RatioSlide
         </div>
       </div>
 
-      {/* Tactile Range Slider - Enlarged Track and Controls */}
+      {/* Tactile Range Slider - Clean Borderless Track */}
       <div className="relative flex items-center my-4 px-1">
         <input
           type="range"
@@ -49,7 +49,7 @@ export function RatioSlider({ rational, onChange, disabled = false }: RatioSlide
           value={rational}
           disabled={disabled}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full h-4 sm:h-5 bg-zinc-200 rounded-none appearance-none cursor-pointer border-2 border-[#18181B] accent-amber-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_2px_0_0_#18181B]"
+          className="w-full h-4 sm:h-5 bg-zinc-200 rounded-none appearance-none cursor-pointer accent-amber-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
           style={{
             background: `linear-gradient(to right, #2563EB 0%, #2563EB ${rational}%, #DC2626 ${rational}%, #DC2626 100%)`,
           }}
