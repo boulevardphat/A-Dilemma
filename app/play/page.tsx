@@ -19,7 +19,9 @@ export default function PlayerPage() {
   } | null>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const saved = sessionStorage.getItem('dilemma_player_v5');
+        const saved =
+          sessionStorage.getItem('dilemma_player_v5') ||
+          localStorage.getItem('dilemma_player_v5');
         if (saved) return JSON.parse(saved);
       } catch {
         // ignore
@@ -34,8 +36,24 @@ export default function PlayerPage() {
   const [joinError, setJoinError] = useState<string | null>(null);
 
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const hasEverStartedRef = useRef<boolean>(false);
+  const lastResetAtRef = useRef<number>(0);
+  const currentStatusRef = useRef<string>('LOBBY');
 
-  // Polling room state every 1000ms and maintaining connection heartbeat
+  // Keep currentStatusRef synced
+  useEffect(() => {
+    if (roomState?.status) {
+      currentStatusRef.current = roomState.status;
+      if (roomState.status !== 'LOBBY') {
+        hasEverStartedRef.current = true;
+      }
+      if (roomState.resetAt) {
+        lastResetAtRef.current = roomState.resetAt;
+      }
+    }
+  }, [roomState]);
+
+  // Polling room state every 1000ms with cold-start serverless resilience
   useEffect(() => {
     if (!player) return;
     let isMounted = true;
@@ -47,6 +65,7 @@ export default function PlayerPage() {
           name: player.name,
           type: player.type,
           ...(player.teamName ? { teamName: player.teamName } : {}),
+          clientStatus: currentStatusRef.current,
           t: Date.now().toString(),
         });
 
@@ -55,7 +74,29 @@ export default function PlayerPage() {
         });
         if (res.ok && isMounted) {
           const data: ClientRoomState = await res.json();
-          setRoomState(data);
+
+          // CRITICAL: Protect against cold-start / serverless instance mismatch
+          if (data.status !== 'LOBBY') {
+            hasEverStartedRef.current = true;
+            if (data.resetAt) {
+              lastResetAtRef.current = data.resetAt;
+            }
+            setRoomState(data);
+          } else {
+            // Only accept LOBBY if host explicitly reset or game never started yet
+            const isRealHostReset = Boolean(
+              data.resetAt && lastResetAtRef.current && data.resetAt > lastResetAtRef.current
+            );
+            if (!hasEverStartedRef.current || isRealHostReset) {
+              if (isRealHostReset) {
+                hasEverStartedRef.current = false;
+                if (data.resetAt) lastResetAtRef.current = data.resetAt;
+              }
+              setRoomState(data);
+            }
+            // Otherwise ignore transient LOBBY from cold container
+          }
+
           if (data.myVote && debounceTimerRef.current === null) {
             setLocalRational(data.myVote.rational);
           }
@@ -115,6 +156,7 @@ export default function PlayerPage() {
       }
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('dilemma_player_v5', JSON.stringify(playerData));
+        localStorage.setItem('dilemma_player_v5', JSON.stringify(playerData));
       }
     } catch {
       setJoinError('Lỗi kết nối máy chủ. Vui lòng thử lại.');
@@ -153,6 +195,7 @@ export default function PlayerPage() {
   const handleResetPlayer = () => {
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('dilemma_player_v5');
+      localStorage.removeItem('dilemma_player_v5');
     }
     setPlayer(null);
     setRoomState(null);

@@ -94,4 +94,32 @@ NHẬT KÝ THAY ĐỔI & KHÔI PHỤC (ROLLBACK LOG) - DỰ ÁN A DILEMMA (8-BIT
    - `npm install && npm run build`: Tạo bản build thành công 100%, render tĩnh toàn bộ 7 route.
    - `compile_applet`: Succeeded.
 
+[LẦN 12] - Đặt đồng xu trực tiếp trên cán cân & Khắc phục văng về giao diện chờ (Turn 16)
+--------------------------------------------------------------------------------
+1. Thiết kế lại Cán cân (PixelScale) theo yêu cầu:
+   - Loại bỏ hoàn toàn 2 khối hộp treo màu xanh (Lý trí) và màu đỏ (Tình cảm) ở đáy cán cân.
+   - Loại bỏ các sợi dây xích treo lủng lẳng bên dưới.
+   - Chuyển toàn bộ 10 đồng xu vàng (PixelCoin) đặt trực tiếp trên mặt 2 cánh đĩa cân bằng đồng thau trên cán cân.
+   - Tự động cân bằng góc đứng của đồng xu khi cán cân nghiêng theo trọng lực (-safeTilt), giúp giao diện gọn gàng, thanh thoát và thuận mắt hơn.
+2. Khắc phục triệt để lỗi "đang chơi dở liên tục bị văng trở lại giao diện chờ":
+   - Nguyên nhân: Trên môi trường serverless (Vercel), nhiều container lambda độc lập được khởi tạo. Khi một container mới phục vụ request GET, Map bộ nhớ trống sẽ trả về status: 'LOBBY', làm client bị giật về màn hình chờ.
+   - Giải pháp:
+     + Lưu trữ và đồng bộ trạng thái phòng qua tệp tin đĩa /tmp/a_dilemma_class_room.json để các instance lambda dùng chung state.
+     + Thêm cơ chế bảo vệ trạng thái client trong app/play/page.tsx: Khi người chơi đã vào vòng chơi (ROUND_1, TWIST_1, TWIST_2), client sẽ khóa màn hình chơi và bỏ qua các phản hồi LOBBY tạm thời từ container lạnh; chỉ quay về LOBBY khi Quản trò thực sự bấm Đặt lại phòng (resetAt mới).
+     + Lưu thông tin phiên đăng nhập người chơi ở cả sessionStorage và localStorage.
+3. Dọn dẹp cache webpack (.next) và xác thực build:
+   - Xóa bộ nhớ cache stale `.next` gây lỗi webpack runtime module.
+   - Khởi động lại dev server sạch sẽ.
+
+[LẦN 13] - Khắc phục lỗi prerender /_not-found và build-manifest /_error (Turn 17)
+--------------------------------------------------------------------------------
+1. Hiện tượng & Nguyên nhân:
+   - File `app/error.tsx` được tạo tự động với component `GlobalError` xung đột với cơ chế prerender của `app/not-found.tsx` trong Next.js 15 App Router (`TypeError: e[o] is not a function`, thiếu file `/_error` trong build-manifest).
+2. Giải pháp thực hiện:
+   - Loại bỏ file `app/error.tsx` không tương thích, chuyển về cơ chế Error Boundary chuẩn mặc định của Next.js 15 App Router.
+3. Kiểm thử xác thực:
+   - `npm run build`: Tạo bản build production thành công 100%, prerender chuẩn tất cả 7 route (bao gồm cả `/_not-found`).
+   - `compile_applet`: Build succeeded.
+   - Dev server: Đã khởi động lại sạch sẽ.
+
 

@@ -49,6 +49,8 @@ export interface GameRoom {
   twist: TwistInfo | null;
   players: Record<string, Player>;
   history: RoundHistoryEntry[];
+  resetAt?: number;
+  startedAt?: number;
 }
 
 export interface ClientRoomState {
@@ -66,6 +68,8 @@ export interface ClientRoomState {
   percentRational: number;
   percentEmotional: number;
   tiltAngle: number;
+  resetAt?: number;
+  startedAt?: number;
   myVote?: {
     rational: number;
     emotional: number;

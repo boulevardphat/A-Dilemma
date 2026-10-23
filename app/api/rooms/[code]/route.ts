@@ -25,7 +25,9 @@ export async function GET(
   const playerType = (url.searchParams.get('type') as 'individual' | 'team') || 'individual';
   const teamName = url.searchParams.get('teamName') || undefined;
 
-  const room = getOrCreateRoom(code);
+  const clientStatus = (url.searchParams.get('clientStatus') as RoundType) || undefined;
+
+  let room = getOrCreateRoom(code);
 
   if (playerId && playerName && !room.players[playerId]) {
     joinPlayer(code, {

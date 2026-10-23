@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { GameRoom, Player, RoundType, TwistInfo, ClientRoomState, RoundHistoryEntry } from './types';
 
 const globalForRooms = globalThis as unknown as {
@@ -9,6 +11,31 @@ if (!globalForRooms.__GAME_ROOMS__) {
 }
 
 const rooms = globalForRooms.__GAME_ROOMS__;
+
+const STATE_FILE = path.join(process.env.TMPDIR || '/tmp', 'a_dilemma_class_room.json');
+
+function persistRoom(room: GameRoom) {
+  try {
+    fs.writeFileSync(STATE_FILE, JSON.stringify(room), 'utf8');
+  } catch {
+    // ignore in environments without write access
+  }
+}
+
+function loadPersistedRoom(code: string): GameRoom | null {
+  try {
+    if (fs.existsSync(STATE_FILE)) {
+      const content = fs.readFileSync(STATE_FILE, 'utf8');
+      const data = JSON.parse(content) as GameRoom;
+      if (data && data.code === code) {
+        return data;
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
 
 export const TWISTS: Record<1 | 2, TwistInfo> = {
   1: {
@@ -68,6 +95,18 @@ export function calculateTiltAngle(totalRational: number, totalEmotional: number
 export function getOrCreateRoom(code: string = 'CLASS'): GameRoom {
   const normalizedCode = (code || 'CLASS').trim().toUpperCase();
   let room = rooms.get(normalizedCode);
+
+  // If memory has no room or is still default LOBBY, attempt restoring active game from disk
+  if (!room || room.status === 'LOBBY') {
+    const fromDisk = loadPersistedRoom(normalizedCode);
+    if (fromDisk) {
+      if (!room || fromDisk.status !== 'LOBBY' || (fromDisk.players && Object.keys(fromDisk.players).length > 0)) {
+        room = fromDisk;
+        rooms.set(normalizedCode, room);
+      }
+    }
+  }
+
   if (!room) {
     room = {
       code: normalizedCode,
@@ -83,8 +122,10 @@ export function getOrCreateRoom(code: string = 'CLASS'): GameRoom {
       twist: null,
       players: {},
       history: [],
+      resetAt: Date.now(),
     };
     rooms.set(normalizedCode, room);
+    persistRoom(room);
   }
   return room;
 }
@@ -193,6 +234,8 @@ export function getClientState(room: GameRoom, playerId?: string): ClientRoomSta
     percentRational,
     percentEmotional,
     tiltAngle,
+    resetAt: room.resetAt,
+    startedAt: room.startedAt,
     myVote: playerId && room.players[playerId]
       ? { rational: room.players[playerId].rational, emotional: room.players[playerId].emotional }
       : undefined,
@@ -229,6 +272,7 @@ export function joinPlayer(
   };
 
   room.players[playerData.id] = player;
+  persistRoom(room);
   return player;
 }
 
@@ -241,6 +285,7 @@ export function submitVote(roomCode: string, playerId: string, rational: number)
   player.rational = clampedRational;
   player.emotional = 100 - clampedRational;
   player.lastActive = Date.now();
+  persistRoom(room);
   return true;
 }
 
@@ -258,6 +303,7 @@ export function continueRound(roomCode: string): GameRoom {
     room.timerRunning = true;
     room.timerStartedAt = Date.now();
     room.timerEndsAt = Date.now() + 60 * 1000;
+    room.startedAt = Date.now();
   } else if (room.status === 'TWIST_1') {
     room.timerTotal = 30;
     room.timerRemaining = 30;
@@ -272,6 +318,7 @@ export function continueRound(roomCode: string): GameRoom {
     room.timerEndsAt = Date.now() + 30 * 1000;
   }
 
+  persistRoom(room);
   return room;
 }
 
@@ -296,6 +343,7 @@ export function setRound(roomCode: string, targetRound: RoundType): GameRoom {
     room.twist = null;
   }
 
+  persistRoom(room);
   return room;
 }
 
@@ -314,6 +362,7 @@ export function triggerTimer(roomCode: string, start: boolean): GameRoom {
     room.timerStartedAt = null;
     room.timerEndsAt = null;
   }
+  persistRoom(room);
   return room;
 }
 
@@ -329,11 +378,14 @@ export function resetGame(roomCode: string): GameRoom {
   room.timerEndsAt = null;
   room.twist = null;
   room.history = [];
+  room.resetAt = Date.now();
+  room.startedAt = undefined;
 
   for (const player of Object.values(room.players)) {
     player.rational = 50;
     player.emotional = 50;
   }
+  persistRoom(room);
   return room;
 }
 
