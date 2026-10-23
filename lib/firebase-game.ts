@@ -137,10 +137,20 @@ export function subscribePlayers(pin: string, callback: (players: Player[]) => v
 }
 
 export async function checkRoomExists(pin: string): Promise<boolean> {
+  const cleanPin = (pin || '').trim().toUpperCase();
+  if (!cleanPin) return false;
   try {
-    const snap = await getDoc(doc(db, 'rooms', pin));
-    return snap.exists();
-  } catch {
+    const snap = await getDoc(doc(db, 'rooms', cleanPin));
+    if (snap.exists()) return true;
+
+    // For default CLASS room, auto-initialize if not yet created
+    if (cleanPin === 'CLASS') {
+      await createRoom('CLASS');
+      return true;
+    }
+    return false;
+  } catch (err) {
+    console.error('checkRoomExists error:', err);
     return false;
   }
 }
@@ -149,7 +159,8 @@ export async function joinPlayer(
   pin: string,
   playerData: { id: string; name: string; type: PlayerMode; teamName?: string; avatar?: string }
 ): Promise<Player> {
-  const playerRef = doc(db, 'rooms', pin, 'players', playerData.id);
+  const cleanPin = (pin || '').trim().toUpperCase();
+  const playerRef = doc(db, 'rooms', cleanPin, 'players', playerData.id);
   const existing = await getDoc(playerRef);
 
   let rational = 50;
@@ -163,11 +174,11 @@ export async function joinPlayer(
     joinedAt = d.joinedAt || Date.now();
   }
 
-  const player: Player = {
+  // CRITICAL: Firestore rejects documents containing undefined properties
+  const payload: Record<string, unknown> = {
     id: playerData.id,
     name: playerData.name.trim() || 'Người chơi 8-bit',
     type: playerData.type || 'individual',
-    teamName: playerData.teamName?.trim() || undefined,
     avatar: playerData.avatar || 'typewriter',
     rational,
     emotional,
@@ -175,8 +186,24 @@ export async function joinPlayer(
     lastActive: Date.now(),
   };
 
-  await setDoc(playerRef, player, { merge: true });
-  return player;
+  const cleanTeamName = playerData.teamName?.trim();
+  if (playerData.type === 'team' && cleanTeamName) {
+    payload.teamName = cleanTeamName;
+  }
+
+  await setDoc(playerRef, payload, { merge: true });
+
+  return {
+    id: playerData.id,
+    name: payload.name as string,
+    type: payload.type as PlayerMode,
+    teamName: payload.teamName as string | undefined,
+    avatar: payload.avatar as string,
+    rational,
+    emotional,
+    joinedAt,
+    lastActive: payload.lastActive as number,
+  };
 }
 
 export async function submitVote(pin: string, playerId: string, rational: number): Promise<void> {

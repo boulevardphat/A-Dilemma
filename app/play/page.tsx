@@ -143,9 +143,10 @@ function PlayerContent() {
         sessionStorage.setItem('dilemma_player_v6', JSON.stringify(playerData));
         localStorage.setItem('dilemma_player_v6', JSON.stringify(playerData));
       }
-    } catch (err) {
-      console.error(err);
-      setJoinError('Lỗi kết nối Firebase. Vui lòng thử lại.');
+    } catch (err: unknown) {
+      console.error('Lỗi khi vào phòng:', err);
+      const msg = err instanceof Error ? err.message : String(err);
+      setJoinError(`Lỗi kết nối Firebase: ${msg}`);
     } finally {
       setJoining(false);
     }
