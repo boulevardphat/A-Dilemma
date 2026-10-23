@@ -19,6 +19,7 @@ export default function HostPage() {
   useEffect(() => {
     let isMounted = true;
     const fetchRoom = async () => {
+      if (typeof document !== 'undefined' && document.hidden) return;
       try {
         const res = await fetch(`/api/rooms/${DEFAULT_ROOM}`);
         if (res.ok && isMounted) {
@@ -31,7 +32,7 @@ export default function HostPage() {
     };
 
     fetchRoom();
-    const interval = setInterval(fetchRoom, 800);
+    const interval = setInterval(fetchRoom, 1500);
     return () => {
       isMounted = false;
       clearInterval(interval);

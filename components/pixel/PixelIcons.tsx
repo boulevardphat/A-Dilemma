@@ -144,3 +144,27 @@ export function PixelNewspaper({ className = 'w-6 h-6' }: { className?: string }
     </svg>
   );
 }
+
+export function PixelUser({ className = 'w-6 h-6' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <rect x="8" y="3" width="8" height="8" fill="#FBBF24" stroke="#18181B" strokeWidth="2" />
+      <rect x="4" y="13" width="16" height="8" fill="#3B82F6" stroke="#18181B" strokeWidth="2" />
+      <rect x="9" y="6" width="2" height="2" fill="#18181B" />
+      <rect x="13" y="6" width="2" height="2" fill="#18181B" />
+    </svg>
+  );
+}
+
+export function PixelTeam({ className = 'w-6 h-6' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="5" width="6" height="6" fill="#FBBF24" stroke="#18181B" strokeWidth="1.5" />
+      <rect x="2" y="12" width="8" height="8" fill="#10B981" stroke="#18181B" strokeWidth="1.5" />
+      <rect x="15" y="5" width="6" height="6" fill="#FBBF24" stroke="#18181B" strokeWidth="1.5" />
+      <rect x="14" y="12" width="8" height="8" fill="#EC4899" stroke="#18181B" strokeWidth="1.5" />
+      <rect x="9" y="2" width="6" height="6" fill="#FDE047" stroke="#18181B" strokeWidth="1.5" />
+      <rect x="7" y="9" width="10" height="11" fill="#3B82F6" stroke="#18181B" strokeWidth="1.5" />
+    </svg>
+  );
+}

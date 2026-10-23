@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import React, { useEffect } from 'react';
+import Image from 'next/image';
 import { TwistInfo } from '@/lib/types';
-import { PixelNewspaper, PixelPointerHand } from './PixelIcons';
+import { PixelPointerHand } from './PixelIcons';
+import { sounds } from '@/lib/sound';
 
 interface PixelBreakingNewsProps {
   twist: TwistInfo | null;
@@ -18,86 +19,85 @@ export function PixelBreakingNews({
   onHostStartTimer,
   timerRunning = false,
 }: PixelBreakingNewsProps) {
+  useEffect(() => {
+    if (twist) {
+      sounds.playNewsAlert();
+    }
+  }, [twist]);
+
   if (!twist) return null;
 
-  // On host, if timer has already started, dismiss overlay
+  // On host, dismiss when timer starts
   if (isHost && timerRunning) return null;
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.25 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#FBF9F5]/95 backdrop-blur-sm"
-      >
-        <motion.div
-          initial={{ scale: 0.94, opacity: 0, y: 10 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-          className="w-full max-w-xl text-center"
-        >
-          {/* Newspaper icon */}
-          <div className="flex justify-center mb-3">
-            <motion.div
-              animate={{ rotate: [-2, 2, -2] }}
-              transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050C24]/95 backdrop-blur-md animate-fadeIn text-white select-none">
+      {/* Background World Map Graphic Overlay */}
+      <div className="absolute inset-0 opacity-25 pointer-events-none overflow-hidden">
+        <Image
+          src="/assets/aistudio/image_920242bf.png"
+          alt="Breaking News World Background"
+          fill
+          className="object-cover"
+          priority
+          referrerPolicy="no-referrer"
+        />
+      </div>
+
+      <div className="relative z-10 w-full max-w-2xl text-center py-6 px-4">
+        {/* Iconic TV Broadcast Header (Matching Reference Image) */}
+        <div className="inline-flex flex-col items-center mb-6">
+          {/* Angled Red Banner for "BREAKING" */}
+          <div className="relative bg-[#E50914] text-white px-8 py-2 transform -skew-x-12 shadow-[0_4px_20px_rgba(229,9,20,0.5)] border-t border-red-300">
+            <span className="block transform skew-x-12 text-2xl sm:text-4xl font-black italic tracking-wider drop-shadow-md">
+              BREAKING
+            </span>
+          </div>
+
+          {/* Bold White "NEWS" */}
+          <div className="text-4xl sm:text-6xl font-black italic tracking-widest text-white mt-1 drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]">
+            NEWS
+          </div>
+        </div>
+
+        {/* Headline */}
+        <h3 className="text-lg sm:text-2xl font-bold text-amber-300 mb-4 px-2 leading-snug">
+          {twist.headline}
+        </h3>
+
+        {/* Detailed Explanation */}
+        <p className="text-sm sm:text-base text-zinc-200 leading-relaxed max-w-xl mx-auto mb-6 px-2 font-medium">
+          {twist.details}
+        </p>
+
+        {/* Highlight pill */}
+        <div className="inline-block bg-white/10 border border-white/20 px-4 py-1.5 text-xs sm:text-sm text-amber-200 font-semibold mb-8">
+          {twist.highlightText}
+        </div>
+
+        {/* Host action button OR Player waiting prompt */}
+        {isHost ? (
+          <div className="flex flex-col items-center gap-2">
+            <button
+              type="button"
+              onClick={onHostStartTimer}
+              className="pixel-btn px-8 py-4 bg-red-600 hover:bg-red-500 text-white font-extrabold text-base tracking-wider flex items-center gap-2 cursor-pointer shadow-[0_4px_0_0_#991B1B] active:translate-y-1"
             >
-              <PixelNewspaper className="w-12 h-12" />
-            </motion.div>
+              <PixelPointerHand className="w-5 h-5 text-amber-300" />
+              <span>BẮT ĐẦU ĐẾM GIỜ (30S)</span>
+            </button>
+            <span className="text-xs text-zinc-400 mt-1 font-medium">
+              Bấm để kích hoạt đếm ngược và mở cân cho cả lớp phân bổ
+            </span>
           </div>
-
-          {/* Big Alert Heading */}
-          <div className="inline-block text-xs font-bold text-red-600 tracking-widest uppercase mb-1">
-            BẢN TIN ĐỘT XUẤT
+        ) : (
+          <div className="text-xs sm:text-sm text-zinc-300 animate-pulse font-medium">
+            {timerRunning
+              ? 'Đồng hồ đang chạy! Hãy điều chỉnh lại cán cân của bạn!'
+              : 'Đang chờ Quản trò bấm bắt đầu để phân bổ lại tiền...'}
           </div>
-
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#18181B] tracking-tight mb-4">
-            BREAKING NEWS
-          </h2>
-
-          {/* Lead Headline */}
-          <h3 className="text-base sm:text-lg font-bold text-red-600 mb-3 px-4 leading-snug">
-            {twist.headline}
-          </h3>
-
-          {/* News Details */}
-          <p className="text-sm sm:text-base text-zinc-700 leading-relaxed max-w-lg mx-auto mb-6 px-4 font-normal">
-            {twist.details}
-          </p>
-
-          {/* Key Highlight */}
-          <div className="text-xs text-zinc-600 font-semibold mb-8">
-            {twist.highlightText}
-          </div>
-
-          {/* Host action button OR Player waiting note */}
-          {isHost ? (
-            <div className="flex flex-col items-center gap-2">
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                type="button"
-                onClick={onHostStartTimer}
-                className="pixel-btn px-6 py-3 bg-[#18181B] text-white hover:bg-zinc-800 font-bold text-sm tracking-wide flex items-center gap-2 cursor-pointer"
-              >
-                <PixelPointerHand className="w-4 h-4 text-amber-400" />
-                <span>BẮT ĐẦU ĐẾM GIỜ (30S)</span>
-              </motion.button>
-              <span className="text-xs text-zinc-500">
-                Bấm để mở đĩa cân cho cả lớp bắt đầu phân bổ tiền
-              </span>
-            </div>
-          ) : (
-            <div className="text-xs text-zinc-500 animate-pulse">
-              {timerRunning
-                ? 'Đang đếm giờ... Hãy phân bổ lại nguồn tiền của bạn!'
-                : 'Chờ Quản trò bấm bắt đầu để phân bổ lại tiền...'}
-            </div>
-          )}
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+        )}
+      </div>
+    </div>
   );
 }

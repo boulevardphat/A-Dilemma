@@ -42,6 +42,7 @@ export default function PlayerPage() {
     if (!player) return;
     let isMounted = true;
     const fetchRoom = async () => {
+      if (typeof document !== 'undefined' && document.hidden) return;
       try {
         const res = await fetch(`/api/rooms/${DEFAULT_ROOM}?playerId=${player.id}`);
         if (res.ok && isMounted) {
@@ -57,7 +58,7 @@ export default function PlayerPage() {
     };
 
     fetchRoom();
-    const interval = setInterval(fetchRoom, 1000);
+    const interval = setInterval(fetchRoom, 1500);
     return () => {
       isMounted = false;
       clearInterval(interval);
