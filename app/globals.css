@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@layer utilities {
+  /* Boxed pixel buttons only */
+  .pixel-btn {
+    border: 2px solid #18181B;
+    box-shadow: 2px 2px 0px #18181B;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+
+  .pixel-btn:hover {
+    box-shadow: 3px 3px 0px #18181B;
+  }
+
+  .pixel-btn:active {
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0px #18181B;
+  }
+
+  .pixel-input {
+    border: 2px solid #18181B;
+    background-color: #FFFFFF;
+    color: #18181B;
+    outline: none;
+  }
+
+  .pixel-input:focus {
+    box-shadow: 2px 2px 0px #18181B;
+  }
+}
+
+/* Light newsprint background with subtle texture */
+body {
+  background-color: #FBF9F5;
+  color: #18181B;
+}
+
+/* Custom minimal scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #D4D4D8;
+  border-radius: 0px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #A1A1AA;
+}

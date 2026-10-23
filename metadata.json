@@ -1,0 +1,6 @@
+{
+  "name": "A Dilemma - Trò chơi Lịch sử Báo chí 8-Bit",
+  "description": "Webapp tương tác nhiều người chơi với cán cân quyết định thời gian thực và đồng tiền Đại lộ phục vụ môn Lịch sử Báo chí theo phong cách 8-bit retro arcade.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

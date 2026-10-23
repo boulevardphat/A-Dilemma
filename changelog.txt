@@ -1,0 +1,15 @@
+================================================================================
+NHẬT KÝ THAY ĐỔI & KHÔI PHỤC (ROLLBACK LOG) - DỰ ÁN A DILEMMA (8-BIT JOURNALISM)
+================================================================================
+
+[LẦN 4] - Sửa lỗi routes-manifest & Bổ sung Error / Not-Found handlers (Turn 6)
+--------------------------------------------------------------------------------
+- app/not-found.tsx:
+  + Bổ sung trang 404 chuẩn App Router để giải quyết lỗi "Invariant: no direct app page entry found for /_not-found" và xung đột routes-manifest trong Next.js 15.
+- app/error.tsx:
+  + Bổ sung error boundary an toàn cho client side rendering.
+- Dev Server:
+  + Khởi động lại development server để xóa cache tạm thời và làm mới state.
+- Kết quả kiểm thử:
+  + npm run lint: 0 errors, 0 warnings.
+  + npm run build (compile_applet): Succeeded 100%.
