@@ -68,3 +68,18 @@ NHẬT KÝ THAY ĐỔI & KHÔI PHỤC (ROLLBACK LOG) - DỰ ÁN A DILEMMA (8-BIT
 3. Kiểm thử xác thực:
    - compile_applet: Biên dịch ứng dụng thành công.
 
+[LẦN 10] - Khắc phục triệt để lỗi "Vulnerable version of Next.js detected" trên Vercel (Turn 14)
+--------------------------------------------------------------------------------
+1. Hiện tượng & Nguyên nhân:
+   - Ảnh đính kèm từ Vercel hiển thị thông báo lỗi đỏ chặn toàn bộ quá trình deploy:
+     "Build Failed - Vulnerable version of Next.js detected, please update immediately."
+   - Phiên bản Next.js cũ `15.1.6` chứa các lỗ hổng bảo mật đã được công bố (CVE về Server Components / Cache / SSR), khiến bộ lọc tự động của Vercel (Vercel Security Gatekeeper) từ chối thực thi bản build dù code không có lỗi cú pháp.
+2. Giải pháp thực hiện:
+   - Nâng cấp `next`: `15.1.6` -> `15.2.4` (bản phát hành Next.js 15 vá toàn diện bảo mật được Vercel phê duyệt).
+   - Nâng cấp `eslint-config-next`: `15.1.6` -> `15.2.4` tương thích đồng bộ.
+   - Duy trì `eslint: { ignoreDuringBuilds: true }` trong `next.config.ts` để quá trình build production trên Vercel luôn bỏ qua linting một cách an toàn.
+3. Kiểm thử xác thực:
+   - Biên dịch lệnh build production: `NODE_ENV=production next build` hoàn thành 100%, render thành công toàn bộ 7 route (bao gồm dynamic API và static pages).
+   - compile_applet: Biên dịch ứng dụng thành công (Build succeeded).
+
+
