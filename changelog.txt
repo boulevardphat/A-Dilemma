@@ -82,4 +82,16 @@ NHẬT KÝ THAY ĐỔI & KHÔI PHỤC (ROLLBACK LOG) - DỰ ÁN A DILEMMA (8-BIT
    - Biên dịch lệnh build production: `NODE_ENV=production next build` hoàn thành 100%, render thành công toàn bộ 7 route (bao gồm dynamic API và static pages).
    - compile_applet: Biên dịch ứng dụng thành công (Build succeeded).
 
+[LẦN 11] - Nâng cấp Next.js 15.2.9 và giải pháp commit Vercel (Turn 15)
+--------------------------------------------------------------------------------
+1. Hiện tượng & Phân tích từ ảnh Vercel mới nhất:
+   - Vercel hiển thị cảnh báo: "Vulnerable version of Next.js detected, please update immediately." tại commit e658f04 ("Add files via upload").
+   - Nguyên nhân: Bản commit e658f04 trên GitHub được upload thủ công trước đó vẫn mang file package.json phiên bản cũ 15.1.6. Ngoài ra, Vercel cung cấp sẵn nút bấm [Upgrade] tự động.
+2. Giải pháp thực hiện:
+   - Nâng cấp `next`: `15.2.4` -> `15.2.9` (bản vá bảo mật cao nhất của dòng Next.js 15.2).
+   - Nâng cấp `eslint-config-next`: `15.2.4` -> `15.2.9`.
+3. Kiểm thử xác thực:
+   - `npm install && npm run build`: Tạo bản build thành công 100%, render tĩnh toàn bộ 7 route.
+   - `compile_applet`: Succeeded.
+
 
