@@ -55,3 +55,16 @@ NHẬT KÝ THAY ĐỔI & KHÔI PHỤC (ROLLBACK LOG) - DỰ ÁN A DILEMMA (8-BIT
 3. Kiểm thử xác thực:
    - Chạy kiểm tra npm run build: Biên dịch thành công 100%, render tĩnh toàn bộ 7 route.
    - compile_applet: Thành công.
+
+[LẦN 9] - Khắc phục lỗi @rushstack/eslint-patch trên Vercel bằng Phương án 1 (Turn 13)
+--------------------------------------------------------------------------------
+1. Hiện tượng & Nguyên nhân:
+   - Khi Vercel chạy `next build`, bước `linting` tự động được kích hoạt.
+   - `eslint-config-next@15.1.6` sử dụng module nội bộ `@rushstack/eslint-patch`, module này bị lỗi không tương thích với hệ thống Flat Config của `eslint@^9.19.0` ("Failed to patch ESLint because the calling module was not recognized").
+   - Thiết lập biến môi trường Vercel `NEXT_DISABLE_ESLINT=1` không phải lúc nào cũng được Next.js App Router ưu tiên nếu lệnh build gọi runner trực tiếp.
+2. Giải pháp thực hiện (Phương án 1):
+   - Cập nhật file `next.config.ts`: Bổ sung `eslint: { ignoreDuringBuilds: true }`.
+   - Đây là cấu hình cấp hệ thống chính thức của Next.js, ra lệnh cho `next build` bỏ qua hoàn toàn việc khởi chạy ESLint runner trong pha tạo bản đóng gói production trên Vercel.
+3. Kiểm thử xác thực:
+   - compile_applet: Biên dịch ứng dụng thành công.
+
