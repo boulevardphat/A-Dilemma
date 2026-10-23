@@ -2,38 +2,18 @@
 NHẬT KÝ THAY ĐỔI & KHÔI PHỤC (ROLLBACK LOG) - DỰ ÁN A DILEMMA (8-BIT JOURNALISM)
 ================================================================================
 
-[LẦN 5] - Nâng cấp toàn diện 5 yêu cầu cốt lõi (Turn 7)
+[LẦN 6] - Khắc phục module & Cập nhật đầy đủ giao diện Quản trò / Người chơi (Turn 8)
 --------------------------------------------------------------------------------
-1. Phối hợp chặt chẽ giữa 2 giao diện Quản trò & Người chơi:
-   - Khi bấm "Màn hình Quản trò" từ trang chủ, Quản trò sẽ vào **Phòng chờ lớp học (Host Waiting Lobby)**:
-     + Hiển thị số lượng và danh sách thẻ tên các sinh viên/nhóm đang chờ tham gia.
-     + Có nút lớn nổi bật: `[BẮT ĐẦU CHƠI (VÒNG 1 - 60S)]`.
-     + Khi Quản trò bấm nút này, cả phòng chuyển ngay sang Vòng 1 và đồng hồ đếm ngược bắt đầu đồng bộ tức thì cho cả lớp.
-
-2. Giao diện Breaking News chuẩn phong cách ảnh mẫu truyền hình:
-   - Tái hiện chính xác phong cách đồ họa thời sự thế giới: Dải cờ đỏ góc nghiêng `BREAKING` chữ trắng in nghiêng đậm nét, khối chữ `NEWS` to bản màu trắng nổi bật trên nền bản đồ thế giới chấm matrix xanh navy (`/assets/aistudio/image_920242bf.png`).
-   - Giữ lại phần diễn giải tình huống rõ ràng, kèm âm thanh hiệu ứng tin nóng giật gân (broadcast alert stinger).
-   - Trên màn hình Quản trò: Có nút `[BẮT ĐẦU ĐẾM GIỜ (30S)]`. Khi Quản trò bấm thì đồng hồ mới bắt đầu chạy và màn hình tin tức biến mất để hiện lại cán cân.
-   - Trên màn hình Người chơi: Tin nóng hiển thị toàn màn hình và tự động nhường chỗ cho đĩa cân khi Quản trò bấm bắt đầu đếm giờ.
-
-3. Đồng hồ đếm ngược to hơn ở chính giữa màn hình & Âm thanh dồn dập:
-   - Đồng hồ được dời lên vị trí trung tâm, đặt ngay trên đỉnh cán cân với kích cỡ lớn (`text-5xl` đến `text-7xl` font-mono font-black).
-   - Tích hợp Web Audio API (không phụ thuộc file âm thanh ngoài):
-     + Tiếng tick nhịp nhàng mỗi giây.
-     + Tiếng tick dồn dập, cao trào tăng dần khi thời gian dưới 10 giây.
-     + Tiếng chuông gong vang lên khi hết giờ (00:00).
-     + Nút bật/tắt âm thanh tinh tế ở góc màn hình.
-
-4. Phóng to Cán cân, Thanh trượt và Timer (Tăng trọng tâm, không rối mắt):
-   - Phóng to kích thước cán cân cơ học (PixelScale `size="lg"` trên Host, `size="md"` trên Player), trục đồng thau và các đĩa cân dày dặn, đầm chắc.
-   - Phóng to thanh trượt RatioSlider với đường ray trượt rõ nét, các đồng xu Đại lộ lớn hơn, tương tác xúc giác rõ ràng.
-   - Bố cục thông thoáng, không viền hộp bento rườm rà.
-
-5. Khắc phục triệt để lỗi va chạm đĩa cân nghiêng đè lên thanh trượt:
-   - Nới rộng khoảng cách dọc (container height lớn hơn, đệm dưới an toàn `pb-4`, `my-4`).
-   - Điều chỉnh biên độ góc nghiêng vật lý an toàn (tối đa ±16°) để khi người chơi kéo 100% về một phía thì đĩa cân dưới cùng vẫn cách thanh trượt một khoảng đệm an toàn, hoàn toàn không bị đè lên nhau.
-
-- Kết quả kiểm thử:
-  + npm run lint: 0 errors, 0 warnings.
-  + npm run build: Thành công 100%.
-  + Dev Server: Khởi động lại trạng thái sạch.
+- Xử lý các import sau khi người dùng xóa file sound.ts và ảnh mẫu:
+  + Loại bỏ toàn bộ import và lời gọi @/lib/sound trong codebase.
+  + Tái hiện giao diện Breaking News truyền hình bằng 100% CSS thuần (dải cờ đỏ nghiêng BREAKING và chữ NEWS trắng đậm trên nền chấm matrix xanh navy).
+- Bổ sung và đồng bộ đầy đủ các tính năng đã yêu cầu:
+  + Giao diện Quản trò (/host): Khi ở trạng thái LOBBY sẽ hiển thị "PHÒNG CHỜ LỚP HỌC", đếm số người đã vào, liệt kê danh sách thẻ tên sinh viên/nhóm tham gia, và nút bấm to [BẮT ĐẦU CHƠI (VÒNG 1 - 60S)].
+  + Khi Quản trò bấm bắt đầu, cả Quản trò và Người chơi chuyển sang màn hình chơi với Timer to khổng lồ ở chính giữa phía trên cán cân.
+  + Phóng to Cán cân và Thanh trượt mượt mà.
+  + Đảm bảo khoảng cách an toàn (container height lớn hơn và giới hạn góc nghiêng tối đa ±16°) để đĩa cân không bao giờ đè lên thanh trượt bên dưới.
+  + Breaking news toàn màn hình: Quản trò có nút [BẮT ĐẦU ĐẾM GIỜ (30S)] để kích hoạt đếm ngược và mở cân cho cả lớp.
+- Kiểm thử kỹ thuật:
+  + ESLint: 0 errors, 0 warnings.
+  + Build (compile_applet): Succeeded 100%.
+  + Server: Đã khởi động lại sạch sẽ.

@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { motion } from 'motion/react';
 import { ClientRoomState, PlayerMode } from '@/lib/types';
 import { JoinForm } from '@/components/player/JoinForm';
 import { RatioSlider } from '@/components/player/RatioSlider';
@@ -21,7 +20,7 @@ export default function PlayerPage() {
   } | null>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const saved = sessionStorage.getItem('dilemma_player_v2');
+        const saved = sessionStorage.getItem('dilemma_player_v4');
         if (saved) return JSON.parse(saved);
       } catch {
         // ignore
@@ -37,7 +36,7 @@ export default function PlayerPage() {
 
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Polling room state every 1s
+  // Polling room state every 1500ms
   useEffect(() => {
     if (!player) return;
     let isMounted = true;
@@ -106,7 +105,7 @@ export default function PlayerPage() {
         setLocalRational(data.player.rational);
       }
       if (typeof window !== 'undefined') {
-        sessionStorage.setItem('dilemma_player_v2', JSON.stringify(playerData));
+        sessionStorage.setItem('dilemma_player_v4', JSON.stringify(playerData));
       }
     } catch {
       setJoinError('Lỗi kết nối máy chủ. Vui lòng thử lại.');
@@ -142,23 +141,10 @@ export default function PlayerPage() {
     }, 200);
   };
 
-  const handleResetPlayer = () => {
-    if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('dilemma_player_v2');
-    }
-    setPlayer(null);
-    setRoomState(null);
-  };
-
   // 1. If not joined, show clean Join Form
   if (!player) {
     return (
-      <main className="min-h-screen relative flex flex-col justify-center items-center px-4">
-        <div className="absolute top-4 left-4">
-          <Link href="/" className="text-xs text-zinc-500 hover:text-black font-medium">
-            ← trang chủ
-          </Link>
-        </div>
+      <main className="min-h-screen flex flex-col justify-center items-center px-4 bg-[#FBF9F5]">
         <JoinForm onJoin={handleJoin} loading={joining} error={joinError} />
       </main>
     );
@@ -167,18 +153,12 @@ export default function PlayerPage() {
   // 2. If game finished / thank you
   if (roomState?.status === 'THANK_YOU') {
     return (
-      <main className="min-h-screen relative flex flex-col justify-center items-center px-4">
-        <div className="absolute top-4 left-4">
-          <Link href="/" className="text-xs text-zinc-500 hover:text-black font-medium">
-            ← trang chủ
-          </Link>
-        </div>
+      <main className="min-h-screen flex flex-col justify-center items-center px-4 bg-[#FBF9F5]">
         <ThankYouScreen
           playerName={player.name}
           teamName={player.teamName}
           rational={localRational}
           emotional={100 - localRational}
-          onResetPlayer={handleResetPlayer}
         />
       </main>
     );
@@ -191,33 +171,19 @@ export default function PlayerPage() {
   const timerStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 
   return (
-    <main className="min-h-screen relative flex flex-col items-center justify-center p-4">
-      {/* Top Left: Back button */}
-      <div className="absolute top-4 left-4 flex items-center gap-3">
-        <Link href="/" className="text-xs text-zinc-500 hover:text-black font-medium">
-          ← trang chủ
-        </Link>
-        <button
-          type="button"
-          onClick={handleResetPlayer}
-          className="text-xs text-zinc-400 hover:text-zinc-600 font-medium"
-        >
-          (đổi người)
-        </button>
+    <main className="min-h-screen relative flex flex-col items-center justify-between p-4 sm:p-6 bg-[#FBF9F5]">
+      {/* Top Bar Info: Unboxed, small text */}
+      <div className="w-full flex items-center justify-between text-xs text-zinc-500 font-medium select-none pt-1">
+        <div>
+          {player.teamName ? `${player.teamName} (${player.name})` : player.name}
+        </div>
+        <div>
+          phòng lớp học
+        </div>
       </div>
 
-      {/* Top Right: Corner info (unboxed, lowercase, small) */}
-      <div className="absolute top-4 right-4 text-xs text-zinc-500 font-medium tracking-tight select-none">
-        {player.teamName ? `${player.teamName} (${player.name})` : player.name}
-        {roomState && roomState.status !== 'LOBBY' && (
-          <span className="ml-2 font-mono font-bold text-[#18181B]">
-            {timerStr}
-          </span>
-        )}
-      </div>
-
-      <div className="w-full max-w-md mx-auto">
-        {/* Full screen Breaking News if active on player */}
+      <div className="w-full max-w-xl mx-auto my-auto py-2">
+        {/* Full screen Breaking News if active on player and timer hasn't started */}
         {roomState?.twist && !roomState.timerRunning && (
           <PixelBreakingNews
             twist={roomState.twist}
@@ -225,64 +191,71 @@ export default function PlayerPage() {
           />
         )}
 
-        {/* LOBBY VIEW - Unboxed, breathable with animated entrance */}
+        {/* LOBBY VIEW - Clean, unboxed waiting room */}
         {roomState?.status === 'LOBBY' && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="text-center py-10 px-2"
-          >
-            <h2 className="text-lg font-bold text-[#18181B] mb-1">
+          <div className="text-center py-12 px-2 animate-fadeIn">
+            <h2 className="text-xl font-bold text-[#18181B] mb-2">
               đã sẵn sàng: {player.teamName ? `${player.teamName} (${player.name})` : player.name}
             </h2>
-            <p className="text-xs text-zinc-500 mb-6 font-medium">
-              chờ quản trò bấm bắt đầu...
+            <p className="text-xs text-zinc-500 mb-8 font-medium">
+              chờ quản trò bấm bắt đầu chơi trên màn hình chính...
             </p>
 
-            <div className="text-left text-xs text-zinc-600 leading-relaxed max-w-sm mx-auto my-6">
-              <div className="font-semibold text-zinc-800 mb-1">tình huống giả định:</div>
-              có 2 bệnh nhân nhiễm bệnh đang chuyển biến tiêu cực. bạn nắm trong tay 100 giá đại lộ để lựa chọn giữa:
-              <br />
-              - <span className="font-bold text-blue-700">lý trí</span>: trị dứt điểm 1 người (ưu tiên thực tế).
-              <br />
-              - <span className="font-bold text-red-600">tình cảm</span>: trị cầm chừng cả 2 người (nhiều rủi ro hơn).
+            <div className="text-left text-xs text-zinc-700 leading-relaxed max-w-sm mx-auto my-6 p-4 bg-white border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B]">
+              <div className="font-bold text-zinc-900 mb-1">TÌNH HUỐNG GIẢ ĐỊNH:</div>
+              Có 2 bệnh nhân nhiễm bệnh đang chuyển biến tiêu cực. Bạn nắm trong tay 100 Giá Đại lộ để lựa chọn giữa:
+              <div className="mt-2 space-y-1">
+                <div>
+                  • <span className="font-bold text-blue-700">Lý trí</span>: Trị dứt điểm 1 người (thực tế, chắc chắn).
+                </div>
+                <div>
+                  • <span className="font-bold text-red-600">Tình cảm</span>: Trị cầm chừng cả 2 người (tình cảm, rủi ro).
+                </div>
+              </div>
             </div>
-          </motion.div>
+          </div>
         )}
 
-        {/* ACTIVE PLAY VIEW - Unboxed, central focus on scale and slider */}
+        {/* ACTIVE PLAY VIEW: Large Centered Timer + Large Scale + Enlarged Slider */}
         {roomState && roomState.status !== 'LOBBY' && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.25 }}
-            className="space-y-4"
-          >
-            {/* The Physical Scale */}
-            <div className="py-2">
-              <PixelScale
-                rationalAmount={localRational}
-                emotionalAmount={100 - localRational}
-                tiltAngle={localTilt}
-                size="md"
-                showCoins
-              />
+          <div className="flex flex-col items-center animate-fadeIn w-full">
+            {/* BIG CENTERED TIMER - Placed directly above the scale */}
+            <div className="text-center mb-1">
+              <div
+                className={`font-mono text-4xl sm:text-5xl font-black tracking-tight ${
+                  roomState.timerRunning && roomState.timerRemaining <= 10
+                    ? 'text-red-600 animate-pulse'
+                    : 'text-[#18181B]'
+                }`}
+              >
+                {timerStr}
+              </div>
+              <div className="text-[11px] text-zinc-500 font-medium">
+                {roomState.timerRunning ? 'đồng hồ đang đếm ngược' : 'tạm dừng'}
+              </div>
             </div>
 
-            {/* The Smooth Ratio Slider */}
+            {/* The Physical Scale (Enlarged, safe clearance) */}
+            <PixelScale
+              rationalAmount={localRational}
+              emotionalAmount={100 - localRational}
+              tiltAngle={localTilt}
+              size="md"
+              showCoins
+            />
+
+            {/* The Smooth Ratio Slider (No overlap with scale) */}
             <RatioSlider
               rational={localRational}
               onChange={handleSliderChange}
               disabled={!roomState.timerRunning && roomState.timerRemaining === 0}
             />
-
-            {/* Subtle note at bottom */}
-            <div className="text-center text-[11px] text-zinc-400">
-              kéo thanh trượt để chia 10 đồng xu đại lộ
-            </div>
-          </motion.div>
+          </div>
         )}
+      </div>
+
+      <div className="text-center text-[11px] text-zinc-400 pb-1">
+        a dilemma · lịch sử báo chí
       </div>
     </main>
   );

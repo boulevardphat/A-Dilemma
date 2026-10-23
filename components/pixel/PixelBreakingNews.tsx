@@ -1,10 +1,8 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import Image from 'next/image';
+import React from 'react';
 import { TwistInfo } from '@/lib/types';
 import { PixelPointerHand } from './PixelIcons';
-import { sounds } from '@/lib/sound';
 
 interface PixelBreakingNewsProps {
   twist: TwistInfo | null;
@@ -19,12 +17,6 @@ export function PixelBreakingNews({
   onHostStartTimer,
   timerRunning = false,
 }: PixelBreakingNewsProps) {
-  useEffect(() => {
-    if (twist) {
-      sounds.playNewsAlert();
-    }
-  }, [twist]);
-
   if (!twist) return null;
 
   // On host, dismiss when timer starts
@@ -32,17 +24,14 @@ export function PixelBreakingNews({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050C24]/95 backdrop-blur-md animate-fadeIn text-white select-none">
-      {/* Background World Map Graphic Overlay */}
-      <div className="absolute inset-0 opacity-25 pointer-events-none overflow-hidden">
-        <Image
-          src="/assets/aistudio/image_920242bf.png"
-          alt="Breaking News World Background"
-          fill
-          className="object-cover"
-          priority
-          referrerPolicy="no-referrer"
-        />
-      </div>
+      {/* High-fidelity CSS Grid Broadcast Background */}
+      <div
+        className="absolute inset-0 opacity-20 pointer-events-none"
+        style={{
+          backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.25) 1px, transparent 1px)',
+          backgroundSize: '20px 20px',
+        }}
+      />
 
       <div className="relative z-10 w-full max-w-2xl text-center py-6 px-4">
         {/* Iconic TV Broadcast Header (Matching Reference Image) */}

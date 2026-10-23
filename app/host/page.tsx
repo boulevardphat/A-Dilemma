@@ -2,20 +2,24 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { motion } from 'motion/react';
 import { ClientRoomState } from '@/lib/types';
 import { PixelScale } from '@/components/pixel/PixelScale';
 import { PixelBreakingNews } from '@/components/pixel/PixelBreakingNews';
-import { PixelPointerHand, PixelBrain, PixelHeart } from '@/components/pixel/PixelIcons';
+import {
+  PixelPointerHand,
+  PixelBrain,
+  PixelHeart,
+  PixelUser,
+  PixelTeam,
+} from '@/components/pixel/PixelIcons';
 
 const DEFAULT_ROOM = 'CLASS';
 
 export default function HostPage() {
   const [roomState, setRoomState] = useState<ClientRoomState | null>(null);
   const [showBreakingModal, setShowBreakingModal] = useState(false);
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  // Poll room state every 800ms
+  // Poll room state every 1500ms
   useEffect(() => {
     let isMounted = true;
     const fetchRoom = async () => {
@@ -79,12 +83,6 @@ export default function HostPage() {
     setShowBreakingModal(false);
   };
 
-  const handleResetGame = () => {
-    performAction('reset');
-    setShowResetConfirm(false);
-    setShowBreakingModal(false);
-  };
-
   const currentStep =
     roomState?.status === 'ROUND_1'
       ? 1
@@ -100,68 +98,110 @@ export default function HostPage() {
   const secs = (roomState?.timerRemaining || 0) % 60;
   const timerStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 
-  return (
-    <main className="min-h-screen relative flex flex-col justify-between p-6 select-none">
-      {/* Top Left: Back link and subtle info */}
-      <div className="absolute top-5 left-6 flex items-center gap-2 text-xs text-zinc-500 font-medium">
-        <Link href="/" className="hover:text-black font-semibold">
-          ← trang chủ
-        </Link>
-        <span>·</span>
-        <span>a dilemma</span>
-        <span>·</span>
-        <span>lịch sử báo chí</span>
-        <span>·</span>
-        <span>{roomState?.playerCount || 0} người tham gia</span>
-      </div>
+  // 1. GIAO DIỆN PHÒNG CHỜ CỦA QUẢN TRÒ (HOST WAITING LOBBY)
+  if (roomState?.status === 'LOBBY') {
+    return (
+      <main className="min-h-screen relative flex flex-col justify-between p-6 sm:p-10 select-none bg-[#FBF9F5]">
+        {/* Top subtle info */}
+        <div className="text-xs text-zinc-500 font-medium">
+          <Link href="/" className="hover:text-black">
+            a dilemma
+          </Link>{' '}
+          · môn lịch sử báo chí · phòng chờ quản trò
+        </div>
 
-      {/* Top Right: Timer & Reset action */}
-      <div className="absolute top-5 right-6 flex items-center gap-4 text-xs font-mono font-bold text-zinc-700">
-        <button
-          type="button"
-          onClick={() => setShowResetConfirm(true)}
-          className="font-sans font-medium text-xs text-zinc-400 hover:text-red-600 transition-colors cursor-pointer"
-          title="Đặt lại trò chơi về trạng thái ban đầu"
-        >
-          ↻ đặt lại trò chơi
-        </button>
+        {/* Central Waiting Lobby Content */}
+        <div className="w-full max-w-2xl mx-auto text-center my-auto py-8">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#18181B] tracking-tight mb-2">
+            PHÒNG CHỜ LỚP HỌC
+          </h1>
+          <p className="text-sm text-zinc-600 mb-8 font-medium">
+            Hướng dẫn sinh viên mở đường link <span className="font-bold underline text-[#18181B]">/play</span> để tham gia.
+          </p>
 
-        {roomState && (
-          <span className={roomState.timerRunning ? 'text-red-600' : 'text-zinc-700'}>
-            {timerStr}
-          </span>
-        )}
-      </div>
+          {/* Connected Count */}
+          <div className="text-base font-bold text-[#18181B] mb-4">
+            Đã kết nối: {roomState.playerCount} người / nhóm
+          </div>
 
-      {/* Reset Confirmation Modal */}
-      {showResetConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#FBF9F5]/90 backdrop-blur-sm animate-fadeIn">
-          <div className="w-full max-w-sm bg-white p-6 border-2 border-[#18181B] shadow-[4px_4px_0px_#18181B] text-center">
-            <h3 className="font-bold text-base text-[#18181B] mb-2">
-              Đặt lại trò chơi?
-            </h3>
-            <p className="text-xs text-zinc-600 mb-6 leading-relaxed">
-              Toàn bộ phiếu bầu và tiến trình các vòng sẽ được đưa về ban đầu để lớp học có thể chơi lại từ đầu.
-            </p>
-            <div className="flex items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={() => setShowResetConfirm(false)}
-                className="pixel-btn px-4 py-2 bg-white text-[#18181B] hover:bg-zinc-100 text-xs font-bold cursor-pointer"
-              >
-                Hủy bỏ
-              </button>
-              <button
-                type="button"
-                onClick={handleResetGame}
-                className="pixel-btn px-4 py-2 bg-red-600 text-white hover:bg-red-700 text-xs font-bold cursor-pointer"
-              >
-                Xác nhận đặt lại
-              </button>
-            </div>
+          {/* Connected Students List */}
+          <div className="min-h-[140px] max-h-60 overflow-y-auto flex flex-wrap justify-center gap-2 p-4 bg-white border-2 border-[#18181B] mb-8 shadow-[3px_3px_0px_#18181B]">
+            {roomState.playersList && roomState.playersList.length > 0 ? (
+              roomState.playersList.map((p) => (
+                <div
+                  key={p.id}
+                  className="px-3 py-1.5 bg-[#FBF9F5] border border-[#18181B] text-xs font-semibold flex items-center gap-1.5"
+                >
+                  {p.type === 'team' ? (
+                    <PixelTeam className="w-3.5 h-3.5 text-emerald-600" />
+                  ) : (
+                    <PixelUser className="w-3.5 h-3.5 text-blue-600" />
+                  )}
+                  <span>{p.teamName ? `${p.teamName} (${p.name})` : p.name}</span>
+                </div>
+              ))
+            ) : (
+              <div className="text-xs text-zinc-400 self-center">
+                Chưa có ai vào phòng. Danh sách sẽ xuất hiện ngay khi sinh viên bấm vào phòng...
+              </div>
+            )}
+          </div>
+
+          {/* Big Start Button */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => handleStepClick(1)}
+              className="pixel-btn w-full sm:w-auto px-8 py-4 bg-[#18181B] text-white hover:bg-zinc-800 font-extrabold text-base tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-[3px_3px_0px_#18181B]"
+            >
+              <PixelPointerHand className="w-5 h-5 text-amber-400" />
+              <span>BẮT ĐẦU CHƠI (VÒNG 1 - 60S)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => performAction('simulate', { count: 12 })}
+              className="pixel-btn w-full sm:w-auto px-4 py-3.5 bg-white text-zinc-700 hover:text-black text-xs font-bold cursor-pointer"
+              title="Tự động thêm 12 sinh viên ảo để kiểm thử"
+            >
+              Mô phỏng lớp học ảo
+            </button>
           </div>
         </div>
-      )}
+
+        {/* Footer */}
+        <div className="text-center text-xs text-zinc-400">
+          chờ đủ thành viên và bấm bắt đầu để đồng bộ toàn lớp
+        </div>
+      </main>
+    );
+  }
+
+  // 2. GIAO DIỆN QUẢN TRÒ ĐANG CHƠI (ACTIVE PLAY VIEW)
+  return (
+    <main className="min-h-screen relative flex flex-col justify-between p-6 select-none bg-[#FBF9F5]">
+      {/* Top Left info: unboxed, subtle, lowercase */}
+      <div className="absolute top-5 left-6 text-xs text-zinc-500 font-medium">
+        <Link href="/" className="hover:text-black">
+          a dilemma
+        </Link>{' '}
+        · môn lịch sử báo chí · {roomState?.playerCount || 0} người tham gia
+      </div>
+
+      {/* Top Right Reset button */}
+      <div className="absolute top-5 right-6 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            if (confirm('Đặt lại phòng về phòng chờ ban đầu?')) {
+              performAction('reset');
+            }
+          }}
+          className="text-xs text-zinc-400 hover:text-red-600 font-medium"
+        >
+          Đặt lại phòng
+        </button>
+      </div>
 
       {/* Full screen Breaking News modal for Host */}
       {showBreakingModal && roomState?.twist && (
@@ -173,15 +213,30 @@ export default function HostPage() {
         />
       )}
 
-      {/* CENTER HERO STAGE: The Giant Scale */}
-      <div className="flex-1 flex flex-col items-center justify-center my-auto">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
-          className="w-full max-w-3xl text-center"
-        >
-          {/* Main Giant Scale with physical physics */}
+      {/* CENTER HERO STAGE: Giant Timer + Giant Scale */}
+      <div className="flex-1 flex flex-col items-center justify-center my-auto py-2">
+        <div className="w-full max-w-4xl text-center">
+          {/* BIG CENTERED TIMER - Placed directly above the scale */}
+          <div className="mb-2">
+            <div
+              className={`font-mono text-5xl sm:text-6xl md:text-7xl font-black tracking-tight ${
+                roomState?.timerRunning && (roomState?.timerRemaining || 0) <= 10
+                  ? 'text-red-600 animate-pulse'
+                  : 'text-[#18181B]'
+              }`}
+            >
+              {timerStr}
+            </div>
+            <div className="text-xs text-zinc-500 font-medium mt-1">
+              {roomState?.timerRunning
+                ? 'Đang đếm ngược...'
+                : roomState?.status === 'THANK_YOU'
+                ? 'Đã kết thúc'
+                : 'Tạm dừng'}
+            </div>
+          </div>
+
+          {/* MAIN GIANT PHYSICAL SCALE */}
           <PixelScale
             rationalAmount={roomState?.totalRational || 0}
             emotionalAmount={roomState?.totalEmotional || 0}
@@ -191,110 +246,89 @@ export default function HostPage() {
           />
 
           {/* Aggregated Figures - Unboxed, breathable */}
-          <div className="flex items-center justify-center gap-10 mt-6 text-center">
+          <div className="flex items-center justify-center gap-12 mt-4 text-center">
             <div>
               <div className="flex items-center justify-center gap-1.5 text-blue-700 mb-0.5">
-                <PixelBrain className="w-4 h-4" />
-                <span className="text-xs font-bold uppercase">Lý trí</span>
+                <PixelBrain className="w-5 h-5" />
+                <span className="text-sm font-bold uppercase tracking-wider">LÝ TRÍ</span>
               </div>
-              <motion.div
-                key={roomState?.percentRational}
-                initial={{ scale: 1.15 }}
-                animate={{ scale: 1 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                className="text-2xl sm:text-3xl font-extrabold text-[#18181B]"
-              >
+              <div className="text-3xl sm:text-4xl font-black text-[#18181B]">
                 {roomState?.percentRational || 50}%
-              </motion.div>
-              <div className="text-[11px] text-zinc-400 font-mono">
+              </div>
+              <div className="text-xs text-zinc-500 font-mono mt-0.5">
                 {roomState?.totalRational || 0} Giá
               </div>
             </div>
 
-            <div className="text-zinc-300 text-2xl font-light">|</div>
+            <div className="text-zinc-300 text-3xl font-light">/</div>
 
             <div>
               <div className="flex items-center justify-center gap-1.5 text-red-600 mb-0.5">
-                <PixelHeart className="w-4 h-4" />
-                <span className="text-xs font-bold uppercase">Tình cảm</span>
+                <PixelHeart className="w-5 h-5" />
+                <span className="text-sm font-bold uppercase tracking-wider">TÌNH CẢM</span>
               </div>
-              <motion.div
-                key={roomState?.percentEmotional}
-                initial={{ scale: 1.15 }}
-                animate={{ scale: 1 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                className="text-2xl sm:text-3xl font-extrabold text-[#18181B]"
-              >
+              <div className="text-3xl sm:text-4xl font-black text-[#18181B]">
                 {roomState?.percentEmotional || 50}%
-              </motion.div>
-              <div className="text-[11px] text-zinc-400 font-mono">
+              </div>
+              <div className="text-xs text-zinc-500 font-mono mt-0.5">
                 {roomState?.totalEmotional || 0} Giá
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
 
-      {/* Post-game Summary (Only appears after locking round 4) - Unboxed, secondary emphasis */}
+      {/* Post-game Summary (Appears after locking round 4) - Unboxed, secondary emphasis */}
       {currentStep === 4 && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="w-full max-w-xl mx-auto my-4 text-center"
-        >
+        <div className="w-full max-w-xl mx-auto my-3 text-center animate-fadeIn">
           <div className="text-xs text-zinc-500 font-medium mb-2">
-            cảm ơn bạn đã tham gia · dữ liệu 3 vòng
+            cảm ơn bạn đã tham gia · số liệu biến động 3 vòng
           </div>
-          <div className="flex items-center justify-center gap-6 text-xs text-zinc-600">
+          <div className="flex items-center justify-center gap-8 text-xs text-zinc-700">
             {roomState?.history?.map((h, i) => (
               <div key={i} className="text-center">
                 <div className="text-[11px] text-zinc-400">
                   {i === 0 ? 'Vòng 1' : i === 1 ? 'Twist 1' : 'Twist 2'}
                 </div>
-                <div className="font-bold text-sm text-[#18181B]">
+                <div className="font-extrabold text-base text-[#18181B]">
                   {h.percentRational}% / {h.percentEmotional}%
                 </div>
               </div>
             ))}
           </div>
-        </motion.div>
+        </div>
       )}
 
       {/* BOTTOM CONTROLLER DOCK: Minimalist buttons 1 2 3 4 with 8-bit pointer hand */}
       <div className="flex flex-col items-center justify-center pb-2">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {[1, 2, 3, 4].map((step) => {
             const isActive = currentStep === step;
             return (
               <div key={step} className="flex flex-col items-center">
                 {isActive ? (
-                  <motion.div
-                    animate={{ y: [0, -4, 0] }}
-                    transition={{ repeat: Infinity, duration: 1, ease: 'easeInOut' }}
-                    className="mb-1"
-                  >
+                  <div className="mb-1 animate-bounce">
                     <PixelPointerHand className="w-4 h-4 text-[#18181B]" />
-                  </motion.div>
+                  </div>
                 ) : (
                   <div className="w-4 h-4 mb-1" />
                 )}
                 <button
                   type="button"
                   onClick={() => handleStepClick(step)}
-                  className={`pixel-btn w-11 h-11 flex items-center justify-center font-mono text-base font-bold cursor-pointer ${
+                  className={`pixel-btn w-12 h-12 flex items-center justify-center font-mono text-lg font-bold cursor-pointer ${
                     isActive
-                      ? 'bg-[#18181B] text-white'
-                      : 'bg-white text-[#18181B] hover:bg-zinc-100'
+                      ? 'bg-[#18181B] text-white shadow-[3px_3px_0px_#18181B]'
+                      : 'bg-white text-[#18181B] hover:bg-zinc-100 shadow-[2px_2px_0px_#18181B]'
                   }`}
                   title={
                     step === 1
-                      ? 'Vòng 1: Tình huống gốc (60s)'
+                      ? '1: Bắt đầu Vòng 1 (60s)'
                       : step === 2
-                      ? 'Breaking News 1 (30s)'
+                      ? '2: Breaking News 1 (30s)'
                       : step === 3
-                      ? 'Breaking News 2 (30s)'
-                      : 'Khóa cân & Kết thúc'
+                      ? '3: Breaking News 2 (30s)'
+                      : '4: Khóa cân & Kết thúc'
                   }
                 >
                   {step}
@@ -305,7 +339,7 @@ export default function HostPage() {
         </div>
 
         {/* Quiet subtext for Host */}
-        <div className="mt-3 text-[11px] text-zinc-400 font-normal">
+        <div className="mt-3 text-[11px] text-zinc-400 font-medium">
           1: tình huống gốc · 2: breaking news 1 · 3: breaking news 2 · 4: kết thúc
         </div>
       </div>
