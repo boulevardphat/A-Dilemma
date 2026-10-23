@@ -41,3 +41,17 @@ NHẬT KÝ THAY ĐỔI & KHÔI PHỤC (ROLLBACK LOG) - DỰ ÁN A DILEMMA (8-BIT
      + Khi hết 30s Twist 1 -> Tự động kích hoạt Breaking News 2 (trạng thái TWIST_2, tạm dừng đếm).
      + Quản trò bấm [TIẾP TỤC (30S)] -> Đếm ngược 30s cuối cùng.
      + Khi hết 30s Twist 2 -> Tự động chuyển sang màn hình Hoàn thành & Tổng kết (THANK_YOU) với dòng "CẢM ƠN BẠN ĐÃ THAM GIA".
+
+[LẦN 8] - Khắc phục triệt để lỗi Vercel Deployment (Turn 11)
+--------------------------------------------------------------------------------
+1. Nguyên nhân lỗi Vercel build:
+   - Module components/pixel/PixelIcons.tsx thiếu export PixelClock, gây ra lỗi TypeScript 'Module "./PixelIcons" has no exported member "PixelClock"' trong components/pixel/PixelTimer.tsx.
+   - File lib/utils.ts import clsx và tailwind-merge nhưng 2 thư viện này chưa có trong dependencies của package.json.
+   - Thiết lập NODE_ENV đảm bảo chuẩn production cho lệnh build của Next.js 15.
+2. Giải pháp thực hiện:
+   - Bổ sung export SVG PixelClock chuẩn pixel 8-bit trong components/pixel/PixelIcons.tsx.
+   - Cài đặt đầy đủ clsx và tailwind-merge vào package.json.
+   - Cập nhật build script trong package.json: "build": "NODE_ENV=production next build".
+3. Kiểm thử xác thực:
+   - Chạy kiểm tra npm run build: Biên dịch thành công 100%, render tĩnh toàn bộ 7 route.
+   - compile_applet: Thành công.

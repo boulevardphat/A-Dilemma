@@ -77,3 +77,12 @@ export function PixelTeam({ className = 'w-4 h-4' }: { className?: string }) {
     </svg>
   );
 }
+
+export function PixelClock({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} xmlns="http://www.w3.org/2000/svg">
+      <path d="M8 2h8v2H8V2zm-4 4h4V4H6v2H4v4h2V6zm14 0h2v4h2V6h-2V4h-2v2zm-14 6H2v4h2v2h2v-2H4v-4zm18 0h-2v4h2v2h2v-2h-2v-4zm-4 8h-8v2h8v-2zm-8-2H6v2h2v-2zm10 0h-2v2h2v-2zM11 6h2v6h4v2h-6V6z" />
+    </svg>
+  );
+}
+
