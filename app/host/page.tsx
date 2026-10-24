@@ -23,7 +23,7 @@ import {
   hostAdvanceRound,
   hostToggleTimer,
   calculateTiltAngle,
-} from '@/lib/firebase-game';
+} from '@/lib/game';
 
 function HostContent() {
   const searchParams = useSearchParams();

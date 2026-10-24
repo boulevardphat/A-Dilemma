@@ -17,7 +17,7 @@ import {
   joinPlayer,
   submitVote,
   calculateTiltAngle,
-} from '@/lib/firebase-game';
+} from '@/lib/game';
 
 interface StoredPlayer {
   pin: string;
