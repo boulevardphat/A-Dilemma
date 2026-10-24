@@ -2,10 +2,10 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'A Dilemma - Trò chơi Lịch sử Báo chí',
+  title: 'A Dilemma - Nhóm NONAME',
   description: 'Trò chơi phân bổ 100 Giá Đại lộ và cán cân quyết định thời gian thực trong lớp học môn Lịch sử Báo chí.',
   openGraph: {
-    title: 'A Dilemma - Trò chơi Lịch sử Báo chí',
+    title: 'A Dilemma - Nhóm NONAME',
     description: 'Trò chơi phân bổ 100 Giá Đại lộ và cán cân quyết định thời gian thực trong lớp học môn Lịch sử Báo chí.',
     type: 'website',
   },
