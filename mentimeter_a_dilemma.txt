@@ -1,0 +1,82 @@
+MÔ HÌNH THIẾT LẬP TRÒ CHƠI "A DILEMMA" TRÊN MENTIMETER
+(Tối ưu theo đúng cơ chế 100 Giá Đại lộ - Dùng dạng câu hỏi "100 Points" hoặc "Scales")
+
+================================================================================
+CÁCH 1: COPY NỘI DUNG DƯỚI ĐÂY DÁN VÀO "MENTI AI" (TẠO TỰ ĐỘNG)
+================================================================================
+
+Hãy tạo một bài thuyết trình khảo sát tương tác gồm 6 slide cho lớp học về Lịch sử Báo chí với chủ đề "A Dilemma: Sự thật toàn diện và Thiên kiến truyền thông":
+
+Slide 1 (Question - 100 Points):
+- Tiêu đề: Vòng 1: Bạn phân bổ 100 Giá Đại lộ như thế nào?
+- Mô tả tình huống: Có 2 bệnh nhân nhiễm bệnh đang chuyển biến tiêu cực. Bạn có 100 Giá Đại lộ để phân bổ vào 2 phương án:
+- Lựa chọn 1: Trị dứt điểm 1 người (Ưu tiên thực tế / Lý trí)
+- Lựa chọn 2: Trị cầm chừng cả 2 người (Ưu tiên tình cảm / Chấp nhận rủi ro)
+
+Slide 2 (Heading / Content Slide):
+- Tiêu đề: BREAKING NEWS 01: DANH TÍNH 2 BỆNH NHÂN!
+- Nội dung: Báo chí vừa phanh phui: Bệnh nhân 1 là người có tiền án nhiều lần vừa mãn hạn tù. Bệnh nhân 2 là một sinh viên nghèo có thành tích học tập xuất sắc.
+
+Slide 3 (Question - 100 Points):
+- Tiêu đề: Vòng 2: Bạn điều chỉnh 100 Giá Đại lộ ra sao sau Breaking News 1?
+- Lựa chọn 1: Trị dứt điểm 1 người (Lý trí)
+- Lựa chọn 2: Trị cầm chừng cả 2 người (Tình cảm)
+
+Slide 4 (Heading / Content Slide):
+- Tiêu đề: BREAKING NEWS 02: BƯỚC NGOẶT Y KHOA!
+- Nội dung: Tiết lộ mới: Bệnh nhân 1 mang kháng thể hiếm, nếu khỏi bệnh có thể hiến huyết tương chế tạo vaccine cứu hàng ngàn người. Bệnh nhân 2 đã bị ung thư giai đoạn cuối, chỉ còn sống thêm vài tháng.
+
+Slide 5 (Question - 100 Points):
+- Tiêu đề: Vòng 3: Quyết định cuối cùng của bạn sau khi biết toàn bộ sự thật?
+- Lựa chọn 1: Trị dứt điểm 1 người (Lý trí)
+- Lựa chọn 2: Trị cầm chừng cả 2 người (Tình cảm)
+
+Slide 6 (Heading / Bullet List):
+- Tiêu đề: Đúc kết Bài học Lịch sử Báo chí
+- Ý 1: Mỗi đợt tin nóng (Breaking News) chưa đầy đủ sẽ ngay lập tức làm lệch cán cân định kiến của công chúng.
+- Ý 2: Báo chí không có sứ mệnh phán xét ai nên được cứu hay không được cứu.
+- Ý 3: Báo chí phải truy tìm toàn bộ sự thật toàn cảnh, đa chiều để đưa câu chuyện về điểm cân bằng khách quan.
+
+
+================================================================================
+CÁCH 2: TẠO THỦ CÔNG TỪNG SLIDE TRÊN MENTIMETER (CHI TIẾT TỪNG THAO TÁC)
+================================================================================
+
+[SLIDE 1]
+- Slide Type: "100 points" (nằm trong mục Popular hoặc Advanced Questions)
+- Question: Vòng 1: Bạn phân bổ 100 Giá Đại lộ vào đâu?
+- Items:
+  + Item 1: Trị dứt điểm 1 người (Lý trí)
+  + Item 2: Trị cầm chừng cả 2 người (Tình cảm)
+- Time to answer: 60 seconds
+
+[SLIDE 2]
+- Slide Type: "Heading" hoặc "Big Text" (Content slides)
+- Headline: BREAKING NEWS 01
+- Subheading: BN1 vừa ra tù có tiền án tiền sự · BN2 là sinh viên nghèo vượt khó
+
+[SLIDE 3]
+- Slide Type: "100 points"
+- Question: Vòng 2: Phân bổ lại 100 Giá Đại lộ sau Breaking News 1
+- Items:
+  + Item 1: Trị dứt điểm 1 người (Lý trí)
+  + Item 2: Trị cầm chừng cả 2 người (Tình cảm)
+- Time to answer: 30 seconds
+
+[SLIDE 4]
+- Slide Type: "Heading" hoặc "Big Text"
+- Headline: BREAKING NEWS 02
+- Subheading: BN1 mang kháng thể hiếm chế tạo vaccine · BN2 ung thư giai đoạn cuối chỉ sống vài tháng
+
+[SLIDE 5]
+- Slide Type: "100 points"
+- Question: Vòng 3: Quyết định chốt lại 100 Giá Đại lộ sau khi rõ toàn bộ sự thật
+- Items:
+  + Item 1: Trị dứt điểm 1 người (Lý trí)
+  + Item 2: Trị cầm chừng cả 2 người (Tình cảm)
+- Time to answer: 30 seconds
+
+[SLIDE 6]
+- Slide Type: "Paragraph" hoặc "Bullet points"
+- Title: Bài học Cốt lõi của Báo chí
+- Description: Sự thật một chiều tạo ra thiên kiến. Báo chí độc lập và khách quan luôn đi tìm sự thật toàn diện.
