@@ -8,9 +8,9 @@ export default defineConfig(() => {
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
-        'next/link': path.resolve(__dirname, 'src/mock-next-link.tsx'),
-        'next/navigation': path.resolve(__dirname, 'src/mock-next-navigation.tsx'),
+        '@': path.resolve(import.meta.dirname, '.'),
+        'next/link': path.resolve(import.meta.dirname, 'src/mock-next-link.tsx'),
+        'next/navigation': path.resolve(import.meta.dirname, 'src/mock-next-navigation.tsx'),
       },
     },
     server: {
