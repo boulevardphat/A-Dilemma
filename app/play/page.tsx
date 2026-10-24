@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { GameRoom, Player, PlayerMode } from '@/lib/types';
 import { JoinForm } from '@/components/player/JoinForm';
 import { RatioSlider } from '@/components/player/RatioSlider';
@@ -29,14 +29,14 @@ interface StoredPlayer {
 
 function PlayerContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const urlPin = searchParams.get('pin')?.toUpperCase() || '';
 
   const [player, setPlayer] = useState<StoredPlayer | null>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const saved =
-          sessionStorage.getItem('dilemma_player_v6') ||
-          localStorage.getItem('dilemma_player_v6');
+        // Read only active session to prevent being trapped across browser sessions
+        const saved = sessionStorage.getItem('dilemma_player_v6');
         if (saved) return JSON.parse(saved);
       } catch {
         // ignore
@@ -54,8 +54,12 @@ function PlayerContent() {
 
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // If URL has a different pin than stored player, handle appropriately
-  const activePin = player?.pin || urlPin;
+  // If URL has a different pin than current stored session, switch to new pin
+  useEffect(() => {
+    if (urlPin && player?.pin && player.pin !== urlPin) {
+      handleLeaveRoom(false);
+    }
+  }, [urlPin, player?.pin]);
 
   // Real-time Firestore subscription to room and players
   useEffect(() => {
@@ -66,6 +70,13 @@ function PlayerContent() {
     }
 
     const unsubRoom = subscribeRoom(player.pin, (updatedRoom) => {
+      if (!updatedRoom) {
+        // Room was deleted, expired, or doesn't exist anymore!
+        // Automatically release student so they are never trapped in an old room!
+        handleLeaveRoom(false);
+        setJoinError('Phòng này đã kết thúc hoặc được quản trò đóng lại.');
+        return;
+      }
       setRoom(updatedRoom);
     });
 
@@ -115,7 +126,7 @@ function PlayerContent() {
       const exists = await checkRoomExists(pin);
 
       if (!exists) {
-        setJoinError(`Không tìm thấy phòng có mã PIN "${pin}". Vui lòng hỏi lại quản trò.`);
+        setJoinError(`Không tìm thấy phòng "${pin}" (có thể phòng đã hết hạn hoặc chưa được tạo).`);
         setJoining(false);
         return;
       }
@@ -141,7 +152,6 @@ function PlayerContent() {
 
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('dilemma_player_v6', JSON.stringify(playerData));
-        localStorage.setItem('dilemma_player_v6', JSON.stringify(playerData));
       }
     } catch (err: unknown) {
       console.error('Lỗi khi vào phòng:', err);
@@ -171,35 +181,39 @@ function PlayerContent() {
     }, 150);
   };
 
-  const handleLeaveRoom = () => {
-    if (confirm('Bạn có chắc muốn rời phòng này không?')) {
-      if (typeof window !== 'undefined') {
-        sessionStorage.removeItem('dilemma_player_v6');
-        localStorage.removeItem('dilemma_player_v6');
-      }
-      setPlayer(null);
-      setRoom(null);
-      setPlayers([]);
+  const handleLeaveRoom = (confirmPrompt = false) => {
+    if (confirmPrompt && !confirm('Bạn có chắc muốn thoát khỏi phòng chơi này không?')) {
+      return;
     }
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('dilemma_player_v6');
+      localStorage.removeItem('dilemma_player_v6');
+    }
+    setPlayer(null);
+    setRoom(null);
+    setPlayers([]);
+    router.replace('/play');
   };
 
   // 1. MÀN HÌNH NHẬP THÔNG TIN VÀO PHÒNG
   if (!player) {
     return (
-      <main className="min-h-screen flex flex-col justify-between items-center p-6 bg-[#FBF9F5]">
-        <div className="w-full max-w-md flex items-center justify-between text-xs text-zinc-500 font-medium">
-          <Link href="/" className="hover:text-black">
-            a dilemma
+      <main className="min-h-screen flex flex-col justify-between items-center p-4 sm:p-6 bg-[#FBF9F5] select-none">
+        <div className="w-full max-w-md flex items-center justify-between text-xs sm:text-sm text-zinc-500 font-bold px-2">
+          <Link href="/" className="hover:text-black flex items-center gap-1">
+            ← Trang chủ
           </Link>
-          <span>nhóm noname</span>
+          <span>A DILEMMA</span>
         </div>
 
-        <JoinForm
-          initialPin={activePin}
-          onJoin={handleJoin}
-          loading={joining}
-          error={joinError}
-        />
+        <div className="w-full max-w-md my-auto py-2">
+          <JoinForm
+            initialPin={urlPin}
+            onJoin={handleJoin}
+            loading={joining}
+            error={joinError}
+          />
+        </div>
 
         <div />
       </main>
@@ -209,59 +223,71 @@ function PlayerContent() {
   // 2. MÀN HÌNH SẢNH CHỜ SINH VIÊN (KHI HOST CHƯA BẤM START)
   if (!room || room.status === 'LOBBY') {
     return (
-      <main className="min-h-screen flex flex-col justify-between items-center p-6 sm:p-10 select-none bg-[#FBF9F5]">
-        <div className="w-full max-w-2xl flex items-center justify-between text-sm text-zinc-500 font-medium">
-          <div>
-            PIN: <span className="font-bold text-zinc-900">{player.pin}</span>
+      <main className="min-h-screen flex flex-col justify-between items-center p-4 sm:p-8 select-none bg-[#FBF9F5]">
+        {/* Top bar with quick exit */}
+        <div className="w-full max-w-xl flex items-center justify-between text-xs sm:text-sm text-zinc-500 font-bold px-1">
+          <Link href="/" className="hover:text-black flex items-center gap-1">
+            ← Trang chủ
+          </Link>
+          <div className="flex items-center gap-3">
+            <span>PIN: <strong className="text-zinc-900">{player.pin}</strong></span>
+            <button
+              type="button"
+              onClick={() => handleLeaveRoom(true)}
+              className="text-red-600 hover:text-red-700 font-black cursor-pointer"
+            >
+              Thoát phòng
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={handleLeaveRoom}
-            className="text-zinc-500 hover:text-red-600 font-bold cursor-pointer"
-          >
-            Rời phòng
-          </button>
         </div>
 
-        <div className="w-full max-w-xl mx-auto text-center my-auto py-8">
-          <div className="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-2">
+        <div className="w-full max-w-lg mx-auto text-center my-auto py-4 px-2">
+          <div className="text-xs uppercase tracking-widest text-zinc-500 font-black mb-2">
             PHÒNG CHỜ LỚP HỌC
           </div>
 
-          <h2 className="text-3xl sm:text-4xl font-black text-[#18181B] mb-3">
+          <h2 className="text-2xl sm:text-3xl font-black text-[#18181B] mb-2">
             CHÀO MỪNG {player.name.toUpperCase()}!
           </h2>
 
           {player.teamName && (
-            <p className="text-sm text-emerald-700 font-bold mb-4">
+            <p className="text-xs sm:text-sm text-emerald-700 font-bold mb-3">
               Đại diện cho: {player.teamName}
             </p>
           )}
 
-          <p className="text-base text-zinc-700 mb-8 font-medium">
+          <p className="text-xs sm:text-sm text-zinc-600 mb-6 font-medium">
             Bạn đã sẵn sàng. Vui lòng nhìn lên màn hình chính của quản trò và chờ bắt đầu...
           </p>
 
-          <div className="bg-white p-5 border-2 border-zinc-200 shadow-[0_2px_0_0_#18181B]">
+          <div className="bg-white p-4 sm:p-5 border-2 border-zinc-200 shadow-[0_2px_0_0_#18181B] mb-6">
             <div className="text-xs text-zinc-500 font-bold uppercase tracking-wider mb-3">
               Thành viên trong phòng ({players.length} người)
             </div>
-            <div className="flex flex-wrap justify-center gap-2 max-h-56 overflow-y-auto">
+            <div className="flex flex-wrap justify-center gap-2 max-h-48 overflow-y-auto">
               {players.map((p) => (
                 <div
                   key={p.id}
-                  className="px-3 py-1.5 bg-zinc-100 text-xs font-bold flex items-center gap-1.5 border border-zinc-300"
+                  className="px-2.5 py-1.5 bg-zinc-100 text-xs font-bold flex items-center gap-1.5 border border-zinc-300"
                 >
                   {p.type === 'team' ? (
-                    <PixelTeam className="w-4 h-4 text-emerald-600" />
+                    <PixelTeam className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                   ) : (
-                    <PixelUser className="w-4 h-4 text-blue-600" />
+                    <PixelUser className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                   )}
-                  <span>{p.teamName ? `${p.teamName} (${p.name})` : p.name}</span>
+                  <span className="truncate max-w-[140px]">{p.teamName ? `${p.teamName} (${p.name})` : p.name}</span>
                 </div>
               ))}
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => handleLeaveRoom(true)}
+            className="pixel-btn w-full py-3 bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-xs sm:text-sm font-bold cursor-pointer"
+          >
+            ← Đổi mã PIN khác / Thoát ra
+          </button>
         </div>
 
         <div />
@@ -290,13 +316,15 @@ function PlayerContent() {
   // 3. MÀN HÌNH KẾT THÚC CẢM ƠN
   if (room.status === 'THANK_YOU') {
     return (
-      <main className="min-h-screen flex flex-col justify-between items-center p-6 bg-[#FBF9F5]">
-        <div className="w-full max-w-xl flex items-center justify-between text-xs text-zinc-500 font-medium">
-          <div>PIN: {player.pin}</div>
+      <main className="min-h-screen flex flex-col justify-between items-center p-4 sm:p-6 bg-[#FBF9F5]">
+        <div className="w-full max-w-xl flex items-center justify-between text-xs sm:text-sm text-zinc-500 font-bold px-2">
+          <Link href="/" className="hover:text-black">
+            ← Trang chủ
+          </Link>
           <button
             type="button"
-            onClick={handleLeaveRoom}
-            className="text-zinc-500 hover:text-red-600 font-bold cursor-pointer"
+            onClick={() => handleLeaveRoom(false)}
+            className="text-red-600 hover:text-red-700 font-black cursor-pointer"
           >
             Thoát phòng
           </button>
@@ -307,7 +335,7 @@ function PlayerContent() {
           teamName={player.teamName}
           rational={localRational}
           emotional={100 - localRational}
-          onResetPlayer={handleLeaveRoom}
+          onResetPlayer={() => handleLeaveRoom(false)}
         />
 
         <div />
@@ -317,13 +345,20 @@ function PlayerContent() {
 
   // 4. MÀN HÌNH ĐANG CHƠI (VÒNG 1, TWIST 1, TWIST 2)
   return (
-    <main className="min-h-screen relative flex flex-col justify-between p-4 sm:p-8 select-none bg-[#FBF9F5]">
-      {/* Top Bar */}
-      <div className="w-full max-w-4xl mx-auto flex items-center justify-between text-sm text-zinc-600 font-bold">
+    <main className="min-h-screen relative flex flex-col justify-between p-3 sm:p-6 select-none bg-[#FBF9F5] overflow-x-hidden">
+      {/* Top Bar with exit option */}
+      <div className="w-full max-w-2xl mx-auto flex items-center justify-between text-xs sm:text-sm text-zinc-600 font-bold px-1">
+        <button
+          type="button"
+          onClick={() => handleLeaveRoom(true)}
+          className="text-zinc-500 hover:text-red-600 cursor-pointer flex items-center gap-1"
+        >
+          ← Thoát
+        </button>
         <div>
           PIN: <span className="font-black text-black">{player.pin}</span> · {player.name}
         </div>
-        <div className="font-mono text-xl sm:text-2xl font-black text-[#18181B] bg-zinc-100 px-3 py-1 border border-zinc-300">
+        <div className="font-mono text-base sm:text-xl font-black text-[#18181B] bg-zinc-100 px-2.5 py-1 border border-zinc-300">
           {timerStr}
         </div>
       </div>
@@ -337,17 +372,17 @@ function PlayerContent() {
         />
       )}
 
-      {/* Main Interactive Stage - Scaled up to fill the viewport */}
-      <div className="flex-1 flex flex-col items-center justify-center my-auto py-4">
-        <div className="w-full max-w-3xl text-center">
-          <div className="text-sm sm:text-base uppercase tracking-wider text-zinc-600 font-black mb-2">
-            {room.status === 'ROUND_1' && 'Vòng 1: Tình huống ban đầu (60s)'}
+      {/* Main Interactive Stage - Responsive on mobile */}
+      <div className="flex-1 flex flex-col items-center justify-center my-auto py-2 sm:py-4">
+        <div className="w-full max-w-2xl text-center px-1">
+          <div className="text-xs sm:text-sm uppercase tracking-wider text-zinc-500 font-black mb-1">
+            {room.status === 'ROUND_1' && 'Vòng 1: Tình huống gốc (60s)'}
             {room.status === 'TWIST_1' && 'Vòng 2: Breaking News 1 (30s)'}
             {room.status === 'TWIST_2' && 'Vòng 3: Breaking News 2 (30s)'}
           </div>
 
-          {/* Scale with player coins - 10 coins tilted with the scale */}
-          <div className="my-3 pointer-events-none">
+          {/* Scale with player coins - Responsive scale width */}
+          <div className="my-1 sm:my-2 pointer-events-none">
             <PixelScale
               rationalAmount={localRational}
               emotionalAmount={100 - localRational}
@@ -357,7 +392,7 @@ function PlayerContent() {
             />
           </div>
 
-          {/* Interactive Ratio Slider - 10 coins, larger scale */}
+          {/* Interactive Ratio Slider - Responsive */}
           <RatioSlider
             rational={localRational}
             onChange={handleSliderChange}

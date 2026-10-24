@@ -51,6 +51,8 @@ export interface GameRoom {
   history: RoundHistoryEntry[];
   resetAt?: number;
   startedAt?: number;
+  expiresAt?: number;
+  deleted?: boolean;
 }
 
 export interface ClientRoomState {

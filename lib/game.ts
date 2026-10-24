@@ -3,6 +3,7 @@ import {
   setDoc,
   getDoc,
   updateDoc,
+  deleteDoc,
   collection,
   onSnapshot,
   Unsubscribe,
@@ -92,10 +93,24 @@ export async function createRoom(customPin?: string): Promise<string> {
     twist: null,
     history: [],
     resetAt: Date.now(),
+    expiresAt: Date.now() + 2 * 60 * 60 * 1000,
+    deleted: false,
   };
 
   await setDoc(roomRef, initialData, { merge: true });
   return pin;
+}
+
+export async function deleteRoom(pin: string): Promise<void> {
+  const cleanPin = (pin || '').trim().toUpperCase();
+  if (!cleanPin) return;
+  try {
+    const roomRef = doc(db, 'rooms', cleanPin);
+    await updateDoc(roomRef, { deleted: true }).catch(() => {});
+    await deleteDoc(roomRef).catch(() => {});
+  } catch (err) {
+    console.error('deleteRoom error:', err);
+  }
 }
 
 export function subscribeRoom(pin: string, callback: (room: GameRoom | null) => void): Unsubscribe {
@@ -105,7 +120,13 @@ export function subscribeRoom(pin: string, callback: (room: GameRoom | null) => 
     (snap) => {
       if (snap.exists()) {
         const data = snap.data() as GameRoom;
-        callback({ ...data, players: data.players || {} });
+        const now = Date.now();
+        const isExpired = data.expiresAt ? now > data.expiresAt : now - data.createdAt > 2 * 60 * 60 * 1000;
+        if (data.deleted || isExpired) {
+          callback(null);
+        } else {
+          callback({ ...data, players: data.players || {} });
+        }
       } else {
         callback(null);
       }
@@ -140,7 +161,17 @@ export async function checkRoomExists(pin: string): Promise<boolean> {
   if (!cleanPin) return false;
   try {
     const snap = await getDoc(doc(db, 'rooms', cleanPin));
-    if (snap.exists()) return true;
+    if (snap.exists()) {
+      const data = snap.data() as GameRoom;
+      if (data.deleted) return false;
+      const now = Date.now();
+      const isExpired = data.expiresAt ? now > data.expiresAt : now - data.createdAt > 2 * 60 * 60 * 1000;
+      if (isExpired) {
+        deleteRoom(cleanPin).catch(() => {});
+        return false;
+      }
+      return true;
+    }
 
     if (cleanPin === 'CLASS') {
       await createRoom('CLASS');
