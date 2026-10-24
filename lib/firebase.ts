@@ -1,0 +1,16 @@
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
+
+const defaultConfig = {
+  projectId: 'graphical-modem-k41j7',
+  appId: '1:903383488489:web:45d3332e6b112e1278dd78',
+  apiKey: 'AIzaSyCzMf7kPC0LEz4YAV3u9xBz8GRWS2Q9AUA',
+  authDomain: 'graphical-modem-k41j7.firebaseapp.com',
+  firestoreDatabaseId: 'ai-studio-remix2310adilemm-5d97295a-b40d-416d-9bca-6f4baab1e587',
+  storageBucket: 'graphical-modem-k41j7.firebasestorage.app',
+  messagingSenderId: '903383488489',
+};
+
+const app = getApps().length === 0 ? initializeApp(defaultConfig) : getApp();
+
+export const db = getFirestore(app, defaultConfig.firestoreDatabaseId);

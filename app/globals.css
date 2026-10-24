@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@source "../app/**/*.{js,ts,jsx,tsx}";
+@source "../components/**/*.{js,ts,jsx,tsx}";
+@source "../src/**/*.{js,ts,jsx,tsx}";
 
 @font-face {
   font-family: 'KVN97';
@@ -24,7 +27,6 @@ button, input, select, textarea {
 }
 
 @layer utilities {
-  /* Clean borderless buttons as requested - No ugly thick borders or box-shadows */
   .pixel-btn {
     border: none !important;
     outline: none;
