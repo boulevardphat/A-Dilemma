@@ -38,6 +38,7 @@ function HostContent() {
   const [copied, setCopied] = useState<boolean>(false);
   const [inputPin, setInputPin] = useState<string>('');
   const [creating, setCreating] = useState<boolean>(false);
+  const [hostCoinDensity, setHostCoinDensity] = useState<'standard' | 'rich' | 'party'>('rich');
 
   // Sync PIN from URL
   useEffect(() => {
@@ -401,14 +402,55 @@ function HostContent() {
             </div>
           </div>
 
-          {/* MAIN GIANT PHYSICAL SCALE */}
+          {/* MAIN GIANT PHYSICAL SCALE - Tilted coins with dynamic counts */}
           <PixelScale
             rationalAmount={totalRational}
             emotionalAmount={totalEmotional}
             tiltAngle={tiltAngle}
             size="lg"
             showCoins
+            coinDensity={hostCoinDensity}
           />
+
+          {/* Scale Coin Density Preset Controls */}
+          <div className="flex items-center justify-center gap-2 mt-1 mb-2 text-xs">
+            <span className="text-zinc-400 font-medium">Hiệu ứng xu đĩa cân:</span>
+            <div className="inline-flex rounded-sm bg-zinc-100 p-0.5 gap-1">
+              <button
+                type="button"
+                onClick={() => setHostCoinDensity('standard')}
+                className={`px-2 py-0.5 text-[10px] font-bold transition-all ${
+                  hostCoinDensity === 'standard'
+                    ? 'bg-[#18181B] text-white shadow-xs'
+                    : 'text-zinc-600 hover:text-black'
+                }`}
+              >
+                Gọn 10 xu
+              </button>
+              <button
+                type="button"
+                onClick={() => setHostCoinDensity('rich')}
+                className={`px-2 py-0.5 text-[10px] font-bold transition-all ${
+                  hostCoinDensity === 'rich'
+                    ? 'bg-[#18181B] text-white shadow-xs'
+                    : 'text-zinc-600 hover:text-black'
+                }`}
+              >
+                Đầy đặn 20-36 xu ★
+              </button>
+              <button
+                type="button"
+                onClick={() => setHostCoinDensity('party')}
+                className={`px-2 py-0.5 text-[10px] font-bold transition-all ${
+                  hostCoinDensity === 'party'
+                    ? 'bg-[#18181B] text-white shadow-xs'
+                    : 'text-zinc-600 hover:text-black'
+                }`}
+              >
+                Đại tiệc xu 40+
+              </button>
+            </div>
+          </div>
 
           {/* Aggregated Figures */}
           <div className="flex items-center justify-center gap-12 mt-4 text-center">

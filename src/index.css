@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'KVN97';
+  src: url('/kvn-97.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+* {
+  font-family: 'KVN97', monospace, sans-serif !important;
+}
+
+body {
+  background-color: #FBF9F5;
+  color: #18181B;
+  font-family: 'KVN97', monospace, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea {
+  font-family: 'KVN97', monospace, sans-serif !important;
+}
+
+@layer utilities {
+  .pixel-btn {
+    border: none !important;
+    outline: none;
+    transition: transform 0.1s ease, opacity 0.1s ease, background-color 0.15s ease;
+  }
+  .pixel-btn:hover {
+    opacity: 0.92;
+  }
+  .pixel-btn:active {
+    transform: translateY(1px);
+    opacity: 0.85;
+  }
+  .pixel-input {
+    border: 1px solid #D4D4D8;
+    background-color: #FFFFFF;
+    color: #18181B;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+  .pixel-input:focus {
+    border-color: #18181B;
+  }
+}
+
+/* Custom minimal scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #D4D4D8;
+  border-radius: 0px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #A1A1AA;
+}

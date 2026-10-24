@@ -49,6 +49,7 @@ function PlayerContent() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [localRational, setLocalRational] = useState<number>(50);
   const [timerRemaining, setTimerRemaining] = useState<number>(60);
+  const [coinDensity, setCoinDensity] = useState<'standard' | 'rich' | 'party'>('rich');
   const [joining, setJoining] = useState<boolean>(false);
   const [joinError, setJoinError] = useState<string | null>(null);
 
@@ -350,7 +351,7 @@ function PlayerContent() {
             {room.status === 'TWIST_2' && 'Vòng 3: Breaking News 2 (30s)'}
           </div>
 
-          {/* Scale with player coins */}
+          {/* Scale with player coins - tilted and responsive */}
           <div className="my-2 pointer-events-none">
             <PixelScale
               rationalAmount={localRational}
@@ -358,6 +359,7 @@ function PlayerContent() {
               tiltAngle={tiltAngle}
               size="md"
               showCoins
+              coinDensity={coinDensity}
             />
           </div>
 
@@ -366,6 +368,8 @@ function PlayerContent() {
             rational={localRational}
             onChange={handleSliderChange}
             disabled={!room.timerRunning}
+            coinDensity={coinDensity}
+            onCoinDensityChange={setCoinDensity}
           />
         </div>
       </div>
@@ -373,7 +377,7 @@ function PlayerContent() {
       {/* Bottom Hint */}
       <div className="text-center text-xs text-zinc-400 py-2">
         {room.timerRunning
-          ? 'Kéo thanh trượt để phân bổ 100 Giá Đại lộ (10 đồng xu)'
+          ? 'Kéo thanh trượt hoặc bấm chọn trực tiếp đồng xu để điều chỉnh cán cân quyết định'
           : 'Đang tạm dừng theo hướng dẫn của quản trò...'}
       </div>
     </main>

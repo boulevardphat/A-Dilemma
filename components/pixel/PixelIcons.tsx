@@ -2,7 +2,15 @@ import React from 'react';
 
 // Handcrafted 8-bit Retro SVGs with explicit dimensions to prevent unstyled layout blowout
 
-export function PixelCoin({ className = 'w-6 h-6', value = 10 }: { className?: string; value?: number }) {
+export function PixelCoin({
+  className = 'w-6 h-6',
+  value = 10,
+}: {
+  className?: string;
+  value?: number | string;
+}) {
+  const strVal = value !== undefined ? String(value) : '10';
+
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       {/* Outer coin border */}
@@ -19,7 +27,7 @@ export function PixelCoin({ className = 'w-6 h-6', value = 10 }: { className?: s
       <rect x="6" y="16" width="12" height="2" fill="#B45309" />
       <rect x="16" y="8" width="2" height="8" fill="#B45309" />
       {/* Coin value or Star stamp */}
-      {value === 10 ? (
+      {strVal === '10' ? (
         <text
           x="12"
           y="15"
@@ -31,8 +39,35 @@ export function PixelCoin({ className = 'w-6 h-6', value = 10 }: { className?: s
         >
           10
         </text>
+      ) : strVal === '5' ? (
+        <text
+          x="12"
+          y="15"
+          textAnchor="middle"
+          fill="#78350F"
+          fontSize="9.5"
+          fontFamily="monospace"
+          fontWeight="900"
+        >
+          5
+        </text>
+      ) : strVal.length > 0 && strVal.length <= 2 ? (
+        <text
+          x="12"
+          y="15"
+          textAnchor="middle"
+          fill="#78350F"
+          fontSize="8.5"
+          fontFamily="monospace"
+          fontWeight="900"
+        >
+          {strVal}
+        </text>
       ) : (
-        <rect x="11" y="9" width="2" height="6" fill="#78350F" />
+        <g fill="#78350F">
+          <rect x="11" y="8" width="2" height="8" />
+          <rect x="8" y="11" width="8" height="2" />
+        </g>
       )}
     </svg>
   );
