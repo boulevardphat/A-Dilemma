@@ -58,23 +58,21 @@ export function JoinForm({ initialPin = '', onJoin, loading, error }: JoinFormPr
   };
 
   return (
-    <div className="w-full max-w-sm mx-auto text-[#18181B] py-6 px-4 select-none">
+    <div className="w-full max-w-md mx-auto text-[#18181B] py-8 px-6 select-none bg-white border-2 border-zinc-200 shadow-[0_3px_0_0_#18181B]">
       <div className="text-center mb-6">
-        <h1 className="text-2xl font-extrabold mb-1">A DILEMMA</h1>
-        <p className="text-xs text-zinc-500 font-medium">
-          trò chơi tương tác môn lịch sử báo chí
-        </p>
+        <h1 className="text-3xl font-black mb-1">A DILEMMA</h1>
+        <div className="h-0.5 w-16 bg-amber-400 mx-auto mt-2" />
       </div>
 
       {(validationMsg || error) && (
-        <div className="mb-4 text-xs text-red-600 font-medium text-center bg-red-50 py-2 px-3">
+        <div className="mb-4 text-xs font-bold text-red-600 text-center bg-red-50 border border-red-200 py-2.5 px-3">
           {validationMsg || error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-xs font-semibold text-zinc-700 mb-1">
+          <label className="block text-xs font-bold uppercase text-zinc-700 mb-1.5">
             Mã PIN phòng chơi
           </label>
           <input
@@ -83,12 +81,12 @@ export function JoinForm({ initialPin = '', onJoin, loading, error }: JoinFormPr
             onChange={(e) => setPin(e.target.value.toUpperCase())}
             placeholder="Ví dụ: 849201..."
             maxLength={10}
-            className="pixel-input w-full px-3 py-2.5 text-base font-bold tracking-widest text-center"
+            className="pixel-input w-full px-4 py-3 text-lg font-black tracking-widest text-center"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-zinc-700 mb-1">
+          <label className="block text-xs font-bold uppercase text-zinc-700 mb-1.5">
             Tên của bạn
           </label>
           <input
@@ -97,21 +95,21 @@ export function JoinForm({ initialPin = '', onJoin, loading, error }: JoinFormPr
             onChange={(e) => setName(e.target.value)}
             placeholder="Họ và tên..."
             maxLength={40}
-            className="pixel-input w-full px-3 py-2.5 text-sm"
+            className="pixel-input w-full px-4 py-3 text-sm font-bold"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-zinc-700 mb-1">
+          <label className="block text-xs font-bold uppercase text-zinc-700 mb-1.5">
             Hình thức tham gia
           </label>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={() => setMode('individual')}
-              className={`pixel-btn py-2 text-xs font-semibold cursor-pointer ${
+              className={`pixel-btn py-2.5 text-xs font-bold cursor-pointer ${
                 mode === 'individual'
-                  ? 'bg-[#18181B] text-white'
+                  ? 'bg-[#18181B] text-white shadow-xs'
                   : 'bg-zinc-200 text-zinc-800 hover:bg-zinc-300'
               }`}
             >
@@ -120,9 +118,9 @@ export function JoinForm({ initialPin = '', onJoin, loading, error }: JoinFormPr
             <button
               type="button"
               onClick={() => setMode('team')}
-              className={`pixel-btn py-2 text-xs font-semibold cursor-pointer ${
+              className={`pixel-btn py-2.5 text-xs font-bold cursor-pointer ${
                 mode === 'team'
-                  ? 'bg-[#18181B] text-white'
+                  ? 'bg-[#18181B] text-white shadow-xs'
                   : 'bg-zinc-200 text-zinc-800 hover:bg-zinc-300'
               }`}
             >
@@ -133,16 +131,16 @@ export function JoinForm({ initialPin = '', onJoin, loading, error }: JoinFormPr
 
         {mode === 'team' && (
           <div className="animate-fadeIn">
-            <label className="block text-xs font-semibold text-zinc-700 mb-1">
+            <label className="block text-xs font-bold uppercase text-zinc-700 mb-1.5">
               Tên nhóm
             </label>
             <input
               type="text"
               value={teamName}
               onChange={(e) => setTeamName(e.target.value)}
-              placeholder="Ví dụ: Nhóm Phóng Viên Trẻ..."
+              placeholder="Ví dụ: Nhóm Phóng Viên..."
               maxLength={40}
-              className="pixel-input w-full px-3 py-2.5 text-sm"
+              className="pixel-input w-full px-4 py-3 text-sm font-bold"
             />
           </div>
         )}
@@ -150,13 +148,13 @@ export function JoinForm({ initialPin = '', onJoin, loading, error }: JoinFormPr
         <button
           type="submit"
           disabled={loading}
-          className="pixel-btn w-full mt-4 py-3.5 bg-[#18181B] text-white hover:bg-zinc-800 font-extrabold text-sm tracking-wider flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+          className="pixel-btn w-full mt-6 py-4 bg-[#18181B] text-white hover:bg-zinc-800 font-black text-base tracking-wider flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50 shadow-[0_3px_0_0_#000]"
         >
           {loading ? (
             <span>ĐANG VÀO PHÒNG...</span>
           ) : (
             <>
-              <PixelPointerHand className="w-4 h-4 text-amber-400" />
+              <PixelPointerHand className="w-5 h-5 text-amber-400" />
               <span>VÀO PHÒNG CHƠI</span>
             </>
           )}

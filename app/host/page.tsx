@@ -2,28 +2,27 @@
 
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { GameRoom, Player } from '@/lib/types';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { GameRoom, Player, RoundType } from '@/lib/types';
 import { PixelScale } from '@/components/pixel/PixelScale';
 import { PixelBreakingNews } from '@/components/pixel/PixelBreakingNews';
 import {
-  PixelPointerHand,
   PixelBrain,
   PixelHeart,
-  PixelUser,
+  PixelPointerHand,
   PixelTeam,
+  PixelUser,
 } from '@/components/pixel/PixelIcons';
 import {
   createRoom,
   subscribeRoom,
   subscribePlayers,
-  calculateTiltAngle,
   hostStartGame,
   hostContinueTwist,
+  hostResetRoom,
   hostAdvanceRound,
   hostToggleTimer,
-  hostResetRoom,
-  hostSimulateClass,
+  calculateTiltAngle,
 } from '@/lib/firebase-game';
 
 function HostContent() {
@@ -38,7 +37,6 @@ function HostContent() {
   const [copied, setCopied] = useState<boolean>(false);
   const [inputPin, setInputPin] = useState<string>('');
   const [creating, setCreating] = useState<boolean>(false);
-  const [hostCoinDensity, setHostCoinDensity] = useState<'standard' | 'rich' | 'party'>('rich');
 
   // Sync PIN from URL
   useEffect(() => {
@@ -158,34 +156,34 @@ function HostContent() {
   // 1. GIAO DIỆN KHỞI TẠO PHÒNG CHƠI (NẾU CHƯA CÓ PIN)
   if (!pin) {
     return (
-      <main className="min-h-screen relative flex flex-col justify-between p-6 sm:p-10 select-none bg-[#FBF9F5]">
-        <div className="text-xs text-zinc-500 font-medium">
+      <main className="min-h-screen relative flex flex-col justify-between p-6 sm:p-12 select-none bg-[#FBF9F5]">
+        <div className="text-sm text-zinc-500 font-bold">
           <Link href="/" className="hover:text-black">
-            a dilemma
+            A DILEMMA
           </Link>{' '}
-          · môn lịch sử báo chí · quản trò
+          · QUẢN TRÒ
         </div>
 
-        <div className="w-full max-w-lg mx-auto text-center my-auto py-8">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#18181B] mb-2">
+        <div className="w-full max-w-xl mx-auto text-center my-auto py-10">
+          <h1 className="text-4xl sm:text-5xl font-black text-[#18181B] mb-4">
             MÀN HÌNH QUẢN TRÒ
           </h1>
-          <p className="text-sm text-zinc-600 mb-8 font-medium">
+          <p className="text-base text-zinc-600 mb-8 font-medium">
             Tạo một phòng học mới với mã PIN 6 số hoặc mở lại phòng đang diễn ra.
           </p>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             <button
               type="button"
               onClick={handleCreateNewRoom}
               disabled={creating}
-              className="pixel-btn w-full py-4 bg-[#18181B] text-white hover:bg-zinc-800 font-extrabold text-base tracking-wider flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="pixel-btn w-full py-5 bg-[#18181B] text-white hover:bg-zinc-800 font-black text-lg tracking-wider flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 shadow-[0_3px_0_0_#000]"
             >
-              <PixelPointerHand className="w-5 h-5 text-amber-400" />
+              <PixelPointerHand className="w-6 h-6 text-amber-400" />
               <span>{creating ? 'ĐANG KHỞI TẠO...' : 'TẠO PHÒNG CHƠI MỚI (PIN 6 SỐ)'}</span>
             </button>
 
-            <div className="text-xs text-zinc-400 font-medium">hoặc</div>
+            <div className="text-xs text-zinc-400 font-bold uppercase tracking-widest">hoặc</div>
 
             <form onSubmit={handleResumePin} className="flex gap-2">
               <input
@@ -194,11 +192,11 @@ function HostContent() {
                 onChange={(e) => setInputPin(e.target.value.toUpperCase())}
                 placeholder="Nhập mã PIN đã có..."
                 maxLength={10}
-                className="pixel-input flex-1 px-3 py-2.5 text-sm font-bold text-center tracking-widest"
+                className="pixel-input flex-1 px-4 py-3 text-base font-bold text-center tracking-widest"
               />
               <button
                 type="submit"
-                className="pixel-btn px-5 py-2.5 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 text-xs font-bold cursor-pointer"
+                className="pixel-btn px-6 py-3 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 text-sm font-bold cursor-pointer"
               >
                 Mở phòng
               </button>
@@ -206,9 +204,7 @@ function HostContent() {
           </div>
         </div>
 
-        <div className="text-center text-xs text-zinc-400">
-          hệ thống đồng bộ trực tiếp qua Firebase Firestore
-        </div>
+        <div />
       </main>
     );
   }
@@ -216,14 +212,14 @@ function HostContent() {
   // 2. GIAO DIỆN PHÒNG CHỜ (LOBBY) KHI ĐÃ CÓ PIN
   if (!room || room.status === 'LOBBY') {
     return (
-      <main className="min-h-screen relative flex flex-col justify-between p-6 sm:p-10 select-none bg-[#FBF9F5]">
-        {/* Top subtle info */}
-        <div className="flex items-center justify-between text-xs text-zinc-500 font-medium">
+      <main className="min-h-screen relative flex flex-col justify-between p-6 sm:p-12 select-none bg-[#FBF9F5]">
+        {/* Top bar */}
+        <div className="flex items-center justify-between text-sm text-zinc-500 font-bold">
           <div>
             <Link href="/" className="hover:text-black">
-              a dilemma
+              A DILEMMA
             </Link>{' '}
-            · môn lịch sử báo chí · phòng chờ quản trò
+            · PHÒNG CHỜ
           </div>
 
           <button
@@ -232,91 +228,82 @@ function HostContent() {
               setPin(null);
               router.push('/host');
             }}
-            className="text-xs text-zinc-500 hover:text-black font-semibold"
+            className="text-sm text-zinc-500 hover:text-black font-bold cursor-pointer"
           >
             Đổi phòng khác
           </button>
         </div>
 
-        {/* Central Waiting Lobby Content */}
-        <div className="w-full max-w-2xl mx-auto text-center my-auto py-6">
-          <div className="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-1">
-            PHÒNG CHỜ LỚP HỌC
+        {/* Central Waiting Lobby Content - Scaled up */}
+        <div className="w-full max-w-4xl mx-auto text-center my-auto py-8">
+          <div className="text-sm uppercase tracking-widest text-zinc-500 font-black mb-2">
+            MÃ PIN THAM GIA PHÒNG CHƠI
           </div>
 
           {/* GIANT PIN CODE */}
-          <div className="my-4">
-            <div className="text-xs text-zinc-500 mb-1">MÃ PIN THAM GIA:</div>
-            <div className="font-mono text-5xl sm:text-7xl font-black text-[#18181B] tracking-widest select-all">
+          <div className="my-6">
+            <div className="font-mono text-6xl sm:text-8xl md:text-9xl font-black text-[#18181B] tracking-widest select-all">
               {pin}
             </div>
           </div>
 
-          {/* Copy Link Button */}
-          <div className="mb-6 flex items-center justify-center gap-2">
+          {/* Direct link & Copy Button */}
+          <div className="flex items-center justify-center gap-3 mb-8">
             <button
               type="button"
               onClick={handleCopyLink}
-              className="pixel-btn px-4 py-2 bg-zinc-100 hover:bg-zinc-200 text-xs font-bold text-zinc-800 flex items-center gap-1.5 cursor-pointer"
+              className="pixel-btn px-6 py-2.5 bg-zinc-200 hover:bg-zinc-300 text-xs font-bold text-zinc-800 flex items-center gap-2 cursor-pointer"
             >
-              <span>{copied ? 'ĐÃ SAO CHÉP LIÊN KẾT!' : 'Sao chép link mời sinh viên'}</span>
+              <span>{copied ? 'ĐÃ SAO CHÉP LIÊN KẾT!' : 'SAO CHÉP LINK GỬI LỚP'}</span>
             </button>
           </div>
 
-          {/* Connected Count */}
-          <div className="text-sm font-bold text-[#18181B] mb-3">
-            Đã kết nối: {players.length} người / nhóm
-          </div>
+          {/* Players Counter & Grid */}
+          <div className="bg-white p-6 border-2 border-zinc-200 shadow-[0_3px_0_0_#18181B] mb-8">
+            <div className="flex items-center justify-between pb-3 mb-4 border-b border-zinc-200">
+              <span className="text-sm font-black uppercase text-zinc-700">
+                Sinh viên / Đội nhóm đã vào phòng
+              </span>
+              <span className="text-sm font-mono font-black text-blue-700 bg-blue-50 px-3 py-1 border border-blue-200">
+                {players.length} THÀNH VIÊN
+              </span>
+            </div>
 
-          {/* Connected Students List */}
-          <div className="min-h-[120px] max-h-52 overflow-y-auto flex flex-wrap justify-center gap-2 p-4 bg-white/70 mb-6">
-            {players.length > 0 ? (
-              players.map((p) => (
-                <div
-                  key={p.id}
-                  className="px-3 py-1.5 bg-zinc-100 text-xs font-semibold flex items-center gap-1.5 animate-fadeIn"
-                >
-                  {p.type === 'team' ? (
-                    <PixelTeam className="w-3.5 h-3.5 text-emerald-600" />
-                  ) : (
-                    <PixelUser className="w-3.5 h-3.5 text-blue-600" />
-                  )}
-                  <span>{p.teamName ? `${p.teamName} (${p.name})` : p.name}</span>
-                </div>
-              ))
+            {players.length === 0 ? (
+              <div className="py-12 text-zinc-400 text-base font-medium">
+                Đang chờ sinh viên quét mã PIN để vào phòng...
+              </div>
             ) : (
-              <div className="text-xs text-zinc-400 self-center">
-                Chưa có ai vào phòng. Hướng dẫn sinh viên vào <span className="font-bold text-zinc-700">/play</span> và nhập mã PIN <span className="font-bold text-zinc-700">{pin}</span>...
+              <div className="flex flex-wrap justify-center gap-2.5 max-h-72 overflow-y-auto p-1">
+                {players.map((p) => (
+                  <div
+                    key={p.id}
+                    className="px-3.5 py-2 bg-zinc-50 border border-zinc-300 text-xs font-bold flex items-center gap-2 shadow-xs"
+                  >
+                    {p.type === 'team' ? (
+                      <PixelTeam className="w-4 h-4 text-emerald-600" />
+                    ) : (
+                      <PixelUser className="w-4 h-4 text-blue-600" />
+                    )}
+                    <span>{p.teamName ? `${p.teamName} (${p.name})` : p.name}</span>
+                  </div>
+                ))}
               </div>
             )}
           </div>
 
-          {/* Start Actions */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => hostStartGame(pin)}
-              className="pixel-btn w-full sm:w-auto px-8 py-4 bg-[#18181B] text-white hover:bg-zinc-800 font-extrabold text-base tracking-wider flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <PixelPointerHand className="w-5 h-5 text-amber-400" />
-              <span>BẮT ĐẦU CHƠI (60S)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => hostSimulateClass(pin, 12)}
-              className="pixel-btn w-full sm:w-auto px-4 py-3.5 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 text-xs font-bold cursor-pointer"
-              title="Tự động thêm 12 sinh viên ảo để kiểm thử"
-            >
-              Mô phỏng lớp học ảo
-            </button>
-          </div>
+          {/* GIANT START BUTTON */}
+          <button
+            type="button"
+            onClick={() => hostStartGame(pin)}
+            className="pixel-btn w-full max-w-xl py-5 px-10 bg-[#18181B] text-white hover:bg-zinc-800 font-black text-lg sm:text-xl tracking-wider flex items-center justify-center gap-3 cursor-pointer shadow-[0_4px_0_0_#000]"
+          >
+            <PixelPointerHand className="w-6 h-6 text-amber-400" />
+            <span>BẮT ĐẦU CHƠI (VÒNG 1 - 60S)</span>
+          </button>
         </div>
 
-        {/* Footer */}
-        <div className="text-center text-xs text-zinc-400">
-          mã PIN {pin} · sẵn sàng kết nối mọi thiết bị sinh viên trong lớp
-        </div>
+        <div />
       </main>
     );
   }
@@ -328,22 +315,22 @@ function HostContent() {
     room.twist !== null;
 
   return (
-    <main className="min-h-screen relative flex flex-col justify-between p-6 select-none bg-[#FBF9F5]">
+    <main className="min-h-screen relative flex flex-col justify-between p-6 sm:p-10 select-none bg-[#FBF9F5]">
       {/* Top Left info */}
-      <div className="absolute top-5 left-6 text-xs text-zinc-500 font-medium">
+      <div className="absolute top-6 left-6 sm:left-10 text-sm text-zinc-600 font-bold">
         <Link href="/" className="hover:text-black">
-          a dilemma
+          A DILEMMA
         </Link>{' '}
-        · PIN: <span className="font-bold text-zinc-800">{pin}</span> · {players.length} người tham gia
+        · PIN: <span className="font-black text-black">{pin}</span> · {players.length} người tham gia
       </div>
 
       {/* Top Right Controls */}
-      <div className="absolute top-5 right-6 flex items-center gap-4">
+      <div className="absolute top-6 right-6 sm:right-10 flex items-center gap-4">
         {room.status !== 'THANK_YOU' && (
           <button
             type="button"
             onClick={() => hostToggleTimer(pin, room.timerRunning, timerRemaining)}
-            className="text-xs text-zinc-600 hover:text-black font-medium"
+            className="text-xs sm:text-sm text-zinc-700 hover:text-black font-bold cursor-pointer"
           >
             {room.timerRunning ? 'Tạm dừng đồng hồ' : 'Tiếp tục đếm'}
           </button>
@@ -355,7 +342,7 @@ function HostContent() {
               hostResetRoom(pin);
             }
           }}
-          className="text-xs text-zinc-400 hover:text-red-600 font-medium"
+          className="text-xs sm:text-sm text-zinc-400 hover:text-red-600 font-bold cursor-pointer"
         >
           Đặt lại phòng
         </button>
@@ -371,21 +358,21 @@ function HostContent() {
         />
       )}
 
-      {/* CENTER HERO STAGE: Giant Timer + Giant Scale */}
-      <div className="flex-1 flex flex-col items-center justify-center my-auto py-2">
-        <div className="w-full max-w-4xl text-center">
+      {/* CENTER HERO STAGE: Giant Timer + Giant Scale - Scaled up to fill the viewport */}
+      <div className="flex-1 flex flex-col items-center justify-center my-auto py-4">
+        <div className="w-full max-w-5xl text-center">
           {/* Round status indicator */}
-          <div className="text-xs uppercase tracking-wider text-zinc-500 font-bold mb-2">
+          <div className="text-sm sm:text-base uppercase tracking-wider text-zinc-500 font-black mb-2">
             {room.status === 'ROUND_1' && 'Vòng 1: Tình huống gốc (60s)'}
             {room.status === 'TWIST_1' && 'Vòng 2: Breaking News 1 (30s)'}
             {room.status === 'TWIST_2' && 'Vòng 3: Breaking News 2 (30s)'}
             {room.status === 'THANK_YOU' && 'Kết thúc: Tổng kết kết quả'}
           </div>
 
-          {/* BIG CENTERED TIMER */}
+          {/* GIANT CENTERED ARCADE TIMER */}
           <div className="mb-2">
             <div
-              className={`font-mono text-5xl sm:text-6xl md:text-7xl font-black ${
+              className={`font-mono text-7xl sm:text-8xl md:text-9xl font-black ${
                 room.timerRunning && timerRemaining <= 10
                   ? 'text-red-600 animate-pulse'
                   : 'text-[#18181B]'
@@ -393,91 +380,47 @@ function HostContent() {
             >
               {timerStr}
             </div>
-            <div className="text-xs text-zinc-500 font-medium mt-1">
-              {room.timerRunning
-                ? 'Đang đếm ngược...'
-                : room.status === 'THANK_YOU'
-                ? 'Đã kết thúc'
-                : 'Tạm dừng'}
-            </div>
           </div>
 
-          {/* MAIN GIANT PHYSICAL SCALE - Tilted coins with dynamic counts */}
+          {/* MAIN GIANT PHYSICAL SCALE - Scaled up with 10 coins tilting in sync */}
           <PixelScale
             rationalAmount={totalRational}
             emotionalAmount={totalEmotional}
             tiltAngle={tiltAngle}
             size="lg"
             showCoins
-            coinDensity={hostCoinDensity}
           />
 
-          {/* Scale Coin Density Preset Controls */}
-          <div className="flex items-center justify-center gap-2 mt-1 mb-2 text-xs">
-            <span className="text-zinc-400 font-medium">Hiệu ứng xu đĩa cân:</span>
-            <div className="inline-flex rounded-sm bg-zinc-100 p-0.5 gap-1">
-              <button
-                type="button"
-                onClick={() => setHostCoinDensity('standard')}
-                className={`px-2 py-0.5 text-[10px] font-bold transition-all ${
-                  hostCoinDensity === 'standard'
-                    ? 'bg-[#18181B] text-white shadow-xs'
-                    : 'text-zinc-600 hover:text-black'
-                }`}
-              >
-                Gọn 10 xu
-              </button>
-              <button
-                type="button"
-                onClick={() => setHostCoinDensity('rich')}
-                className={`px-2 py-0.5 text-[10px] font-bold transition-all ${
-                  hostCoinDensity === 'rich'
-                    ? 'bg-[#18181B] text-white shadow-xs'
-                    : 'text-zinc-600 hover:text-black'
-                }`}
-              >
-                Đầy đặn 20-36 xu ★
-              </button>
-              <button
-                type="button"
-                onClick={() => setHostCoinDensity('party')}
-                className={`px-2 py-0.5 text-[10px] font-bold transition-all ${
-                  hostCoinDensity === 'party'
-                    ? 'bg-[#18181B] text-white shadow-xs'
-                    : 'text-zinc-600 hover:text-black'
-                }`}
-              >
-                Đại tiệc xu 40+
-              </button>
-            </div>
-          </div>
-
-          {/* Aggregated Figures */}
-          <div className="flex items-center justify-center gap-12 mt-4 text-center">
+          {/* Aggregated Figures - Scaled up */}
+          <div className="flex items-center justify-center gap-12 sm:gap-20 mt-6 text-center">
             <div>
-              <div className="flex items-center justify-center gap-1.5 text-blue-700 mb-0.5">
-                <PixelBrain className="w-5 h-5" />
-                <span className="text-sm font-bold uppercase tracking-wider">LÝ TRÍ</span>
+              <div className="flex items-center justify-center gap-2 text-blue-700 mb-1">
+                <PixelBrain className="w-6 h-6 sm:w-8 sm:h-8" />
+                <span className="text-base sm:text-lg font-black uppercase tracking-wider">
+                  LÝ TRÍ
+                </span>
               </div>
-              <div className="text-3xl sm:text-4xl font-black text-[#18181B]">
+              <div className="text-4xl sm:text-5xl md:text-6xl font-black text-[#18181B]">
                 {percentRational}%
               </div>
-              <div className="text-xs text-zinc-500 font-mono mt-0.5">
+              <div className="text-xs sm:text-sm text-zinc-500 font-mono font-bold mt-1">
                 {totalRational} Giá
               </div>
             </div>
 
-            <div className="text-zinc-300 text-3xl font-light">/</div>
+            <div className="text-zinc-300 text-4xl sm:text-5xl font-light">/</div>
 
             <div>
-              <div className="flex items-center justify-center gap-1.5 text-red-600 mb-0.5">
-                <PixelHeart className="w-5 h-5" />
-                <span className="text-sm font-bold uppercase tracking-wider">TÌNH CẢM</span>
+              <div className="flex items-center justify-center gap-2 text-red-600 mb-1">
+                <PixelHeart className="w-6 h-6 sm:w-8 sm:h-8" />
+                <span className="text-base sm:text-lg font-black uppercase tracking-wider">
+                  TÌNH CẢM
+                </span>
               </div>
-              <div className="text-3xl sm:text-4xl font-black text-[#18181B]">
+              <div className="text-4xl sm:text-5xl md:text-6xl font-black text-[#18181B]">
                 {percentEmotional}%
               </div>
-              <div className="text-xs text-zinc-500 font-mono mt-0.5">
+              <div className="text-xs sm:text-sm text-zinc-500 font-mono font-bold mt-1">
                 {totalEmotional} Giá
               </div>
             </div>
@@ -486,25 +429,13 @@ function HostContent() {
       </div>
 
       {/* Post-game Summary */}
-      {room.status === 'THANK_YOU' ? (
-        <div className="w-full max-w-xl mx-auto my-3 text-center animate-fadeIn">
-          <div className="text-xs text-zinc-500 font-medium mb-3">
-            cảm ơn bạn đã tham gia · kết quả chung cuộc cả lớp
-          </div>
-          <div className="flex items-center justify-center gap-8 text-xs text-zinc-700 mb-4">
-            <div className="text-center">
-              <div className="text-[11px] text-zinc-400">Tỷ lệ chung cuộc</div>
-              <div className="font-extrabold text-base text-[#18181B]">
-                {percentRational}% Lý trí / {percentEmotional}% Tình cảm
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-center gap-3">
+      {room.status === 'THANK_YOU' && (
+        <div className="w-full max-w-xl mx-auto my-4 text-center animate-fadeIn">
+          <div className="flex items-center justify-center gap-4">
             <button
               type="button"
               onClick={() => hostResetRoom(pin)}
-              className="pixel-btn px-6 py-2.5 bg-[#18181B] text-white hover:bg-zinc-800 text-xs font-bold cursor-pointer"
+              className="pixel-btn px-8 py-3 bg-[#18181B] text-white hover:bg-zinc-800 text-sm font-black cursor-pointer shadow-[0_3px_0_0_#000]"
             >
               Chơi lại phòng này
             </button>
@@ -514,19 +445,15 @@ function HostContent() {
                 setPin(null);
                 router.push('/host');
               }}
-              className="pixel-btn px-5 py-2.5 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 text-xs font-bold cursor-pointer"
+              className="pixel-btn px-7 py-3 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 text-sm font-bold cursor-pointer"
             >
               Tạo phòng mới khác
             </button>
           </div>
         </div>
-      ) : (
-        <div className="text-center text-xs text-zinc-400 py-2">
-          {room.status === 'ROUND_1' && 'hết 60s sẽ tự động mở breaking news 1'}
-          {room.status === 'TWIST_1' && 'hết 30s sẽ tự động mở breaking news 2'}
-          {room.status === 'TWIST_2' && 'hết 30s sẽ tự động tổng kết kết quả'}
-        </div>
       )}
+
+      <div />
     </main>
   );
 }
@@ -535,8 +462,8 @@ export default function HostPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#FBF9F5] text-zinc-500 text-sm">
-          Đang tải màn hình quản trò...
+        <div className="min-h-screen flex items-center justify-center bg-[#FBF9F5] text-zinc-500 text-sm font-bold">
+          Đang khởi tạo quản trò...
         </div>
       }
     >

@@ -49,7 +49,6 @@ function PlayerContent() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [localRational, setLocalRational] = useState<number>(50);
   const [timerRemaining, setTimerRemaining] = useState<number>(60);
-  const [coinDensity, setCoinDensity] = useState<'standard' | 'rich' | 'party'>('rich');
   const [joining, setJoining] = useState<boolean>(false);
   const [joinError, setJoinError] = useState<string | null>(null);
 
@@ -147,7 +146,7 @@ function PlayerContent() {
     } catch (err: unknown) {
       console.error('Lỗi khi vào phòng:', err);
       const msg = err instanceof Error ? err.message : String(err);
-      setJoinError(`Lỗi kết nối Firebase: ${msg}`);
+      setJoinError(`Lỗi kết nối: ${msg}`);
     } finally {
       setJoining(false);
     }
@@ -188,11 +187,11 @@ function PlayerContent() {
   if (!player) {
     return (
       <main className="min-h-screen flex flex-col justify-between items-center p-6 bg-[#FBF9F5]">
-        <div className="w-full max-w-sm flex items-center justify-between text-xs text-zinc-500 font-medium">
+        <div className="w-full max-w-md flex items-center justify-between text-xs text-zinc-500 font-medium">
           <Link href="/" className="hover:text-black">
             a dilemma
           </Link>
-          <span>môn lịch sử báo chí</span>
+          <span>nhóm noname</span>
         </div>
 
         <JoinForm
@@ -202,9 +201,7 @@ function PlayerContent() {
           error={joinError}
         />
 
-        <div className="text-center text-xs text-zinc-400">
-          tham gia trực tuyến qua mã PIN 6 số của lớp học
-        </div>
+        <div />
       </main>
     );
   }
@@ -212,53 +209,53 @@ function PlayerContent() {
   // 2. MÀN HÌNH SẢNH CHỜ SINH VIÊN (KHI HOST CHƯA BẤM START)
   if (!room || room.status === 'LOBBY') {
     return (
-      <main className="min-h-screen flex flex-col justify-between items-center p-6 select-none bg-[#FBF9F5]">
-        <div className="w-full max-w-sm flex items-center justify-between text-xs text-zinc-500 font-medium">
+      <main className="min-h-screen flex flex-col justify-between items-center p-6 sm:p-10 select-none bg-[#FBF9F5]">
+        <div className="w-full max-w-2xl flex items-center justify-between text-sm text-zinc-500 font-medium">
           <div>
-            PIN: <span className="font-bold text-zinc-800">{player.pin}</span>
+            PIN: <span className="font-bold text-zinc-900">{player.pin}</span>
           </div>
           <button
             type="button"
             onClick={handleLeaveRoom}
-            className="text-zinc-500 hover:text-red-600 font-semibold cursor-pointer"
+            className="text-zinc-500 hover:text-red-600 font-bold cursor-pointer"
           >
             Rời phòng
           </button>
         </div>
 
-        <div className="w-full max-w-md mx-auto text-center my-auto py-8">
+        <div className="w-full max-w-xl mx-auto text-center my-auto py-8">
           <div className="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-2">
-            ĐÃ KẾT NỐI PHÒNG HỌC
+            PHÒNG CHỜ LỚP HỌC
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#18181B] mb-2">
+          <h2 className="text-3xl sm:text-4xl font-black text-[#18181B] mb-3">
             CHÀO MỪNG {player.name.toUpperCase()}!
           </h2>
 
           {player.teamName && (
-            <p className="text-xs text-emerald-700 font-semibold mb-4">
+            <p className="text-sm text-emerald-700 font-bold mb-4">
               Đại diện cho: {player.teamName}
             </p>
           )}
 
-          <p className="text-sm text-zinc-600 mb-8 font-medium">
-            Bạn đã sẵn sàng. Vui lòng nhìn lên màn hình chính của quản trò và chờ trò chơi bắt đầu...
+          <p className="text-base text-zinc-700 mb-8 font-medium">
+            Bạn đã sẵn sàng. Vui lòng nhìn lên màn hình chính của quản trò và chờ bắt đầu...
           </p>
 
-          <div className="bg-white/70 p-4 mb-6">
-            <div className="text-xs text-zinc-500 font-semibold mb-2">
-              Sinh viên trong phòng: {players.length} người
+          <div className="bg-white p-5 border-2 border-zinc-200 shadow-[0_2px_0_0_#18181B]">
+            <div className="text-xs text-zinc-500 font-bold uppercase tracking-wider mb-3">
+              Thành viên trong phòng ({players.length} người)
             </div>
-            <div className="flex flex-wrap justify-center gap-1.5 max-h-40 overflow-y-auto">
+            <div className="flex flex-wrap justify-center gap-2 max-h-56 overflow-y-auto">
               {players.map((p) => (
                 <div
                   key={p.id}
-                  className="px-2 py-1 bg-zinc-100 text-[11px] font-semibold flex items-center gap-1"
+                  className="px-3 py-1.5 bg-zinc-100 text-xs font-bold flex items-center gap-1.5 border border-zinc-300"
                 >
                   {p.type === 'team' ? (
-                    <PixelTeam className="w-3 h-3 text-emerald-600" />
+                    <PixelTeam className="w-4 h-4 text-emerald-600" />
                   ) : (
-                    <PixelUser className="w-3 h-3 text-blue-600" />
+                    <PixelUser className="w-4 h-4 text-blue-600" />
                   )}
                   <span>{p.teamName ? `${p.teamName} (${p.name})` : p.name}</span>
                 </div>
@@ -267,9 +264,7 @@ function PlayerContent() {
           </div>
         </div>
 
-        <div className="text-center text-xs text-zinc-400">
-          đồng bộ tự động thời gian thực qua Firebase Firestore
-        </div>
+        <div />
       </main>
     );
   }
@@ -296,12 +291,12 @@ function PlayerContent() {
   if (room.status === 'THANK_YOU') {
     return (
       <main className="min-h-screen flex flex-col justify-between items-center p-6 bg-[#FBF9F5]">
-        <div className="w-full max-w-sm flex items-center justify-between text-xs text-zinc-500 font-medium">
+        <div className="w-full max-w-xl flex items-center justify-between text-xs text-zinc-500 font-medium">
           <div>PIN: {player.pin}</div>
           <button
             type="button"
             onClick={handleLeaveRoom}
-            className="text-zinc-500 hover:text-red-600 font-semibold cursor-pointer"
+            className="text-zinc-500 hover:text-red-600 font-bold cursor-pointer"
           >
             Thoát phòng
           </button>
@@ -315,22 +310,22 @@ function PlayerContent() {
           onResetPlayer={handleLeaveRoom}
         />
 
-        <div className="text-center text-xs text-zinc-400">
-          bài học: báo chí độc lập tìm kiếm sự thật toàn cảnh
-        </div>
+        <div />
       </main>
     );
   }
 
   // 4. MÀN HÌNH ĐANG CHƠI (VÒNG 1, TWIST 1, TWIST 2)
   return (
-    <main className="min-h-screen relative flex flex-col justify-between p-4 sm:p-6 select-none bg-[#FBF9F5]">
+    <main className="min-h-screen relative flex flex-col justify-between p-4 sm:p-8 select-none bg-[#FBF9F5]">
       {/* Top Bar */}
-      <div className="w-full flex items-center justify-between text-xs text-zinc-500 font-medium">
+      <div className="w-full max-w-4xl mx-auto flex items-center justify-between text-sm text-zinc-600 font-bold">
         <div>
-          PIN: <span className="font-bold text-zinc-800">{player.pin}</span> · {player.name}
+          PIN: <span className="font-black text-black">{player.pin}</span> · {player.name}
         </div>
-        <div className="font-mono text-base font-bold text-zinc-800">{timerStr}</div>
+        <div className="font-mono text-xl sm:text-2xl font-black text-[#18181B] bg-zinc-100 px-3 py-1 border border-zinc-300">
+          {timerStr}
+        </div>
       </div>
 
       {/* Breaking News Overlay for student */}
@@ -342,44 +337,36 @@ function PlayerContent() {
         />
       )}
 
-      {/* Main Interactive Stage */}
-      <div className="flex-1 flex flex-col items-center justify-center my-auto py-2">
-        <div className="w-full max-w-lg text-center">
-          <div className="text-xs uppercase tracking-wider text-zinc-500 font-bold mb-1">
+      {/* Main Interactive Stage - Scaled up to fill the viewport */}
+      <div className="flex-1 flex flex-col items-center justify-center my-auto py-4">
+        <div className="w-full max-w-3xl text-center">
+          <div className="text-sm sm:text-base uppercase tracking-wider text-zinc-600 font-black mb-2">
             {room.status === 'ROUND_1' && 'Vòng 1: Tình huống ban đầu (60s)'}
             {room.status === 'TWIST_1' && 'Vòng 2: Breaking News 1 (30s)'}
             {room.status === 'TWIST_2' && 'Vòng 3: Breaking News 2 (30s)'}
           </div>
 
-          {/* Scale with player coins - tilted and responsive */}
-          <div className="my-2 pointer-events-none">
+          {/* Scale with player coins - 10 coins tilted with the scale */}
+          <div className="my-3 pointer-events-none">
             <PixelScale
               rationalAmount={localRational}
               emotionalAmount={100 - localRational}
               tiltAngle={tiltAngle}
               size="md"
               showCoins
-              coinDensity={coinDensity}
             />
           </div>
 
-          {/* Interactive Ratio Slider */}
+          {/* Interactive Ratio Slider - 10 coins, larger scale */}
           <RatioSlider
             rational={localRational}
             onChange={handleSliderChange}
             disabled={!room.timerRunning}
-            coinDensity={coinDensity}
-            onCoinDensityChange={setCoinDensity}
           />
         </div>
       </div>
 
-      {/* Bottom Hint */}
-      <div className="text-center text-xs text-zinc-400 py-2">
-        {room.timerRunning
-          ? 'Kéo thanh trượt hoặc bấm chọn trực tiếp đồng xu để điều chỉnh cán cân quyết định'
-          : 'Đang tạm dừng theo hướng dẫn của quản trò...'}
-      </div>
+      <div />
     </main>
   );
 }

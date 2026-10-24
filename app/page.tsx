@@ -7,56 +7,53 @@ import { PixelPointerHand } from '@/components/pixel/PixelIcons';
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen flex flex-col justify-between items-center p-6 text-[#18181B] select-none bg-[#FBF9F5]">
-      {/* Top minimal bar */}
-      <header className="w-full max-w-2xl flex items-center justify-between text-xs text-zinc-500 font-medium">
-        <span>a dilemma</span>
-        <span>môn lịch sử báo chí</span>
+    <main className="min-h-screen flex flex-col justify-between items-center p-6 sm:p-10 text-[#18181B] select-none bg-[#FBF9F5]">
+      {/* Top bar */}
+      <header className="w-full max-w-4xl flex items-center justify-between text-sm text-zinc-500 font-bold">
+        <span>A DILEMMA</span>
+        <span>NHÓM NONAME</span>
       </header>
 
-      {/* Center content */}
-      <div className="w-full max-w-lg text-center my-auto py-8">
-        <h1 className="text-3xl sm:text-4xl font-extrabold mb-2">
+      {/* Center content - Scaled up for strong presence */}
+      <div className="w-full max-w-3xl text-center my-auto py-8">
+        <h1 className="text-4xl sm:text-6xl md:text-7xl font-black mb-3 tracking-tight">
           A DILEMMA
         </h1>
-        <p className="text-sm text-zinc-500 mb-8 max-w-sm mx-auto">
-          trò chơi phân bổ 100 giá đại lộ và khám phá hiện tượng thiên kiến truyền thông
+        <p className="text-base sm:text-lg text-zinc-600 mb-8 max-w-md mx-auto font-medium">
+          Trò chơi phân bổ 100 Giá Đại lộ và khám phá hiện tượng thiên kiến truyền thông
         </p>
 
         {/* Scaled preview */}
-        <div className="my-6 pointer-events-none opacity-90 scale-90 sm:scale-100">
+        <div className="my-6 pointer-events-none opacity-95">
           <PixelScale
             rationalAmount={50}
             emotionalAmount={50}
             tiltAngle={0}
-            size="sm"
+            size="md"
             showCoins
           />
         </div>
 
-        {/* 2 Clear Action Buttons - Borderless */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
+        {/* 2 Clear Action Buttons */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
           <Link
             href="/play"
-            className="pixel-btn w-full sm:w-auto px-6 py-3.5 bg-[#18181B] text-white hover:bg-zinc-800 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer"
+            className="pixel-btn w-full sm:w-auto px-8 py-4 bg-[#18181B] text-white hover:bg-zinc-800 font-black text-base flex items-center justify-center gap-2.5 cursor-pointer shadow-[0_3px_0_0_#000]"
           >
-            <PixelPointerHand className="w-4 h-4 text-amber-400" />
+            <PixelPointerHand className="w-5 h-5 text-amber-400" />
             <span>VÀO PHÒNG CHƠI</span>
           </Link>
 
           <Link
             href="/host"
-            className="pixel-btn w-full sm:w-auto px-6 py-3.5 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer"
+            className="pixel-btn w-full sm:w-auto px-8 py-4 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 font-black text-base flex items-center justify-center gap-2 cursor-pointer"
           >
             <span>MÀN HÌNH QUẢN TRÒ</span>
           </Link>
         </div>
       </div>
 
-      {/* Bottom note */}
-      <footer className="text-center text-xs text-zinc-400">
-        thiết kế phục vụ giảng dạy báo chí
-      </footer>
+      <div />
     </main>
   );
 }
