@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { PixelBrain, PixelHeart, PixelCoin } from '../pixel/PixelIcons';
+import { sound } from '@/lib/sound';
 
 interface RatioSliderProps {
   rational: number; // 0 to 100
@@ -53,7 +54,10 @@ export function RatioSlider({ rational, onChange, disabled = false }: RatioSlide
           step="10"
           value={rational}
           disabled={disabled}
-          onChange={(e) => onChange(Number(e.target.value))}
+          onChange={(e) => {
+            sound.playSliderTick();
+            onChange(Number(e.target.value));
+          }}
           className="w-full h-5 sm:h-7 bg-zinc-200 rounded-none appearance-none cursor-pointer accent-amber-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_2px_0_0_#18181B]"
           style={{
             background: `linear-gradient(to right, #2563EB 0%, #2563EB ${rational}%, #DC2626 ${rational}%, #DC2626 100%)`,
@@ -66,7 +70,12 @@ export function RatioSlider({ rational, onChange, disabled = false }: RatioSlide
         {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((step) => (
           <span
             key={step}
-            onClick={() => !disabled && onChange(step)}
+            onClick={() => {
+              if (!disabled) {
+                sound.playSliderTick();
+                onChange(step);
+              }
+            }}
             className={`cursor-pointer transition-transform ${
               rational === step ? 'font-black text-[#18181B] scale-125' : 'hover:text-black'
             }`}
@@ -83,7 +92,12 @@ export function RatioSlider({ rational, onChange, disabled = false }: RatioSlide
           return (
             <div
               key={idx}
-              onClick={() => !disabled && onChange((idx + 1) * 10)}
+              onClick={() => {
+                if (!disabled) {
+                  sound.playCoin();
+                  onChange((idx + 1) * 10);
+                }
+              }}
               className={`cursor-pointer transition-transform hover:scale-125 p-0.5 shrink-0 ${
                 isRational ? 'opacity-100 scale-105' : 'opacity-60'
               }`}

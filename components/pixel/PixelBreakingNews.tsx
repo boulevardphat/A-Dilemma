@@ -1,8 +1,7 @@
-'use client';
-
 import React from 'react';
 import { TwistInfo } from '@/lib/types';
 import { PixelPointerHand } from './PixelIcons';
+import { sound } from '@/lib/sound';
 
 interface PixelBreakingNewsProps {
   twist: TwistInfo | null;
@@ -61,7 +60,10 @@ export function PixelBreakingNews({
           <div className="flex flex-col items-center gap-2">
             <button
               type="button"
-              onClick={onHostStartTimer}
+              onClick={() => {
+                sound.playRoundStart();
+                onHostStartTimer?.();
+              }}
               className="pixel-btn px-8 py-4 bg-[#E50914] hover:bg-red-700 text-white font-extrabold text-base tracking-wider flex items-center justify-center gap-2 cursor-pointer"
             >
               <PixelPointerHand className="w-5 h-5 text-amber-300" />

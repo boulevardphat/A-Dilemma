@@ -13,6 +13,8 @@ import {
   PixelTeam,
   PixelUser,
 } from '@/components/pixel/PixelIcons';
+import { PixelNotificationCenter } from '@/components/pixel/PixelNotificationCenter';
+import { useGameNotifications } from '@/lib/useGameNotifications';
 import {
   createRoom,
   deleteRoom,
@@ -23,6 +25,8 @@ import {
   hostResetRoom,
   hostAdvanceRound,
   hostToggleTimer,
+  hostSimulateClass,
+  hostSimulateVoteShift,
   calculateTiltAngle,
 } from '@/lib/game';
 
@@ -38,6 +42,8 @@ function HostContent() {
   const [copied, setCopied] = useState<boolean>(false);
   const [inputPin, setInputPin] = useState<string>('');
   const [creating, setCreating] = useState<boolean>(false);
+
+  const { notifications, addNotification, dismiss, syncPlayers } = useGameNotifications();
 
   // Sync PIN from URL
   useEffect(() => {
@@ -64,13 +70,14 @@ function HostContent() {
 
     const unsubPlayers = subscribePlayers(pin, (updatedPlayers) => {
       setPlayers(updatedPlayers);
+      syncPlayers(updatedPlayers);
     });
 
     return () => {
       unsubRoom();
       unsubPlayers();
     };
-  }, [pin]);
+  }, [pin, syncPlayers]);
 
   // Handle countdown timer & auto progression
   const lastAdvanceStatusRef = useRef<string | null>(null);
@@ -269,14 +276,21 @@ function HostContent() {
             </div>
           </div>
 
-          {/* Direct link & Copy Button */}
-          <div className="flex items-center justify-center gap-3 mb-6">
+          {/* Direct link, Copy Button & Quick Demo */}
+          <div className="flex flex-wrap items-center justify-center gap-2.5 mb-6">
             <button
               type="button"
               onClick={handleCopyLink}
               className="pixel-btn px-5 sm:px-6 py-2 sm:py-2.5 bg-zinc-200 hover:bg-zinc-300 text-xs font-bold text-zinc-800 flex items-center gap-2 cursor-pointer"
             >
               <span>{copied ? 'ĐÃ SAO CHÉP LIÊN KẾT!' : 'SAO CHÉP LINK GỬI LỚP'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => hostSimulateClass(pin, 6)}
+              className="pixel-btn px-4 py-2 sm:py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+            >
+              <span>+ Thêm 6 SV demo</span>
             </button>
           </div>
 
@@ -325,6 +339,7 @@ function HostContent() {
           </button>
         </div>
 
+        <PixelNotificationCenter notifications={notifications} onDismiss={dismiss} />
         <div />
       </main>
     );
@@ -348,7 +363,15 @@ function HostContent() {
         </div>
 
         {/* Top Right Controls */}
-        <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex items-center gap-2.5 sm:gap-4">
+          <button
+            type="button"
+            onClick={() => hostSimulateVoteShift(pin)}
+            title="Giả lập một số sinh viên thay đổi xu trên cán cân"
+            className="text-xs sm:text-sm text-amber-700 bg-amber-100 hover:bg-amber-200 px-2 sm:px-2.5 py-1 border border-amber-300 font-bold cursor-pointer"
+          >
+            Mô phỏng đổi xu
+          </button>
           {room.status !== 'THANK_YOU' && (
             <button
               type="button"
@@ -481,6 +504,7 @@ function HostContent() {
         </div>
       )}
 
+      <PixelNotificationCenter notifications={notifications} onDismiss={dismiss} />
       <div />
     </main>
   );

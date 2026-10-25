@@ -17,6 +17,21 @@ body {
   color: #18181B;
   font-family: 'KVN97', monospace, sans-serif !important;
   -webkit-font-smoothing: antialiased;
+  position: relative;
+  min-height: 100vh;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url('https://raw.githubusercontent.com/boulevardphat/Kho-multimedia-c-a-Blvd/main/A%20Dilemma/bg.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: 0;
 }
 
 button, input, select, textarea {

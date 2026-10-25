@@ -10,6 +10,8 @@ import { ThankYouScreen } from '@/components/player/ThankYouScreen';
 import { PixelScale } from '@/components/pixel/PixelScale';
 import { PixelBreakingNews } from '@/components/pixel/PixelBreakingNews';
 import { PixelTeam, PixelUser } from '@/components/pixel/PixelIcons';
+import { PixelNotificationCenter } from '@/components/pixel/PixelNotificationCenter';
+import { useGameNotifications } from '@/lib/useGameNotifications';
 import {
   subscribeRoom,
   subscribePlayers,
@@ -52,6 +54,7 @@ function PlayerContent() {
   const [joining, setJoining] = useState<boolean>(false);
   const [joinError, setJoinError] = useState<string | null>(null);
 
+  const { notifications, addNotification, dismiss, syncPlayers } = useGameNotifications();
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // If URL has a different pin than current stored session, switch to new pin
@@ -82,6 +85,7 @@ function PlayerContent() {
 
     const unsubPlayers = subscribePlayers(player.pin, (updatedPlayers) => {
       setPlayers(updatedPlayers);
+      syncPlayers(updatedPlayers);
       const me = updatedPlayers.find((p) => p.id === player.id);
       if (me && debounceTimerRef.current === null) {
         setLocalRational(me.rational);
@@ -92,7 +96,7 @@ function PlayerContent() {
       unsubRoom();
       unsubPlayers();
     };
-  }, [player?.pin, player?.id]);
+  }, [player?.pin, player?.id, syncPlayers]);
 
   // Synchronized countdown timer
   useEffect(() => {
@@ -163,6 +167,19 @@ function PlayerContent() {
   };
 
   const handleSliderChange = (newRational: number) => {
+    const diff = newRational - localRational;
+    const deltaCoins = Math.round(Math.abs(diff) / 10);
+    if (deltaCoins > 0) {
+      addNotification({
+        actorName: player?.name || 'Bạn',
+        isTeam: player?.type === 'team',
+        deltaCoins,
+        targetSide: diff > 0 ? 'rational' : 'emotional',
+        fromSide: diff > 0 ? 'emotional' : 'rational',
+        customTitle: 'BẠN VỪA ĐIỀU CHỈNH',
+      });
+    }
+
     setLocalRational(newRational);
 
     if (!player) return;
@@ -290,6 +307,7 @@ function PlayerContent() {
           </button>
         </div>
 
+        <PixelNotificationCenter notifications={notifications} onDismiss={dismiss} />
         <div />
       </main>
     );
@@ -401,6 +419,7 @@ function PlayerContent() {
         </div>
       </div>
 
+      <PixelNotificationCenter notifications={notifications} onDismiss={dismiss} />
       <div />
     </main>
   );

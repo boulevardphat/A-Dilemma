@@ -1,8 +1,7 @@
-'use client';
-
 import React, { useState, useEffect } from 'react';
 import { PlayerMode } from '@/lib/types';
 import { PixelPointerHand } from '../pixel/PixelIcons';
+import { sound } from '@/lib/sound';
 
 interface JoinFormProps {
   initialPin?: string;
@@ -106,7 +105,10 @@ export function JoinForm({ initialPin = '', onJoin, loading, error }: JoinFormPr
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={() => setMode('individual')}
+              onClick={() => {
+                sound.playClick();
+                setMode('individual');
+              }}
               className={`pixel-btn py-2.5 text-xs font-bold cursor-pointer ${
                 mode === 'individual'
                   ? 'bg-[#18181B] text-white shadow-xs'
@@ -117,7 +119,10 @@ export function JoinForm({ initialPin = '', onJoin, loading, error }: JoinFormPr
             </button>
             <button
               type="button"
-              onClick={() => setMode('team')}
+              onClick={() => {
+                sound.playClick();
+                setMode('team');
+              }}
               className={`pixel-btn py-2.5 text-xs font-bold cursor-pointer ${
                 mode === 'team'
                   ? 'bg-[#18181B] text-white shadow-xs'
@@ -148,6 +153,7 @@ export function JoinForm({ initialPin = '', onJoin, loading, error }: JoinFormPr
         <button
           type="submit"
           disabled={loading}
+          onClick={() => sound.playClick()}
           className="pixel-btn w-full mt-6 py-4 bg-[#18181B] text-white hover:bg-zinc-800 font-black text-base tracking-wider flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50 shadow-[0_3px_0_0_#000]"
         >
           {loading ? (

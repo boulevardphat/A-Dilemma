@@ -4,14 +4,16 @@ import React from 'react';
 import Link from 'next/link';
 import { PixelScale } from '@/components/pixel/PixelScale';
 import { PixelPointerHand } from '@/components/pixel/PixelIcons';
+import { PixelSoundToggle } from '@/components/pixel/PixelSoundToggle';
+import { sound } from '@/lib/sound';
 
 export default function HomePage() {
   return (
     <main className="min-h-screen flex flex-col justify-between items-center p-4 sm:p-8 md:p-10 text-[#18181B] select-none bg-[#FBF9F5] overflow-x-hidden">
       {/* Top bar */}
       <header className="w-full max-w-3xl flex items-center justify-between text-xs sm:text-sm text-zinc-500 font-bold px-1">
-        <span>A DILEMMA</span>
-        <span>NHÓM NONAME</span>
+        <span>A DILEMMA · NHÓM NONAME</span>
+        <PixelSoundToggle />
       </header>
 
       {/* Center content - Airy and spacious on mobile */}
@@ -38,6 +40,7 @@ export default function HomePage() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mt-6 sm:mt-8 w-full max-w-xs sm:max-w-none mx-auto">
           <Link
             href="/play"
+            onClick={() => sound.playClick()}
             className="pixel-btn w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 bg-[#18181B] text-white hover:bg-zinc-800 font-black text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer shadow-[0_3px_0_0_#000]"
           >
             <PixelPointerHand className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
@@ -46,6 +49,7 @@ export default function HomePage() {
 
           <Link
             href="/host"
+            onClick={() => sound.playClick()}
             className="pixel-btn w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 font-black text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer"
           >
             <span>MÀN HÌNH QUẢN TRÒ</span>

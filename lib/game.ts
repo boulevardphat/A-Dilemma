@@ -2,6 +2,7 @@ import {
   doc,
   setDoc,
   getDoc,
+  getDocs,
   updateDoc,
   deleteDoc,
   collection,
@@ -380,3 +381,30 @@ export async function hostSimulateClass(pin: string, count: number = 12): Promis
 
   await batch.commit();
 }
+
+export async function hostSimulateVoteShift(pin: string): Promise<void> {
+  const playersCol = collection(db, 'rooms', pin, 'players');
+  const snap = await getDocs(playersCol);
+  if (snap.empty) {
+    await hostSimulateClass(pin, 6);
+    return;
+  }
+
+  const docs = snap.docs;
+  const countToChange = Math.min(docs.length, Math.floor(Math.random() * 2) + 1);
+  const shuffled = [...docs].sort(() => 0.5 - Math.random()).slice(0, countToChange);
+
+  for (const docSnap of shuffled) {
+    const data = docSnap.data();
+    const currentRational = typeof data.rational === 'number' ? data.rational : 50;
+    const deltas = [-30, -20, -10, 10, 20, 30];
+    const delta = deltas[Math.floor(Math.random() * deltas.length)];
+    const newRational = Math.max(0, Math.min(100, currentRational + delta));
+    await updateDoc(docSnap.ref, {
+      rational: newRational,
+      emotional: 100 - newRational,
+      lastActive: Date.now(),
+    });
+  }
+}
+
