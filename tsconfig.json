@@ -22,6 +22,12 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "next/link": [
+        "./src/mock-next-link.tsx"
+      ],
+      "next/navigation": [
+        "./src/mock-next-navigation.tsx"
       ]
     },
     "allowImportingTsExtensions": true,
@@ -29,19 +35,13 @@
     "strict": false,
     "incremental": true,
     "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ]
+    "resolveJsonModule": true
   },
   "exclude": [
-    "dist"
+    "dist",
+    "node_modules"
   ],
   "include": [
-    "next-env.d.ts",
-    ".next/types/**/*.ts",
     "**/*.ts",
     "**/*.tsx"
   ]

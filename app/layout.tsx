@@ -1,5 +1,14 @@
-import type { Metadata } from 'next';
 import './globals.css';
+
+export interface Metadata {
+  title: string;
+  description: string;
+  openGraph?: {
+    title: string;
+    description: string;
+    type: string;
+  };
+}
 
 export const metadata: Metadata = {
   title: 'A Dilemma - Nhóm NONAME',
