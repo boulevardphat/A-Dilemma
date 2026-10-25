@@ -18,20 +18,21 @@ export function PixelScale({
   size = 'md',
   showCoins = true,
 }: PixelScaleProps) {
-  // Exactly 10 coins total representing 100 Giá (1 coin = 10 Giá)
+  // Real coin count: 1 coin = 10 Giá Đại lộ
+  // Unlimited coins - stacks up to 50, 100+ as more players join and vote!
   const total = rationalAmount + emotionalAmount;
   let rationalCoins = 5;
   let emotionalCoins = 5;
 
   if (total > 0) {
-    rationalCoins = Math.max(0, Math.min(10, Math.round((rationalAmount / total) * 10)));
-    emotionalCoins = 10 - rationalCoins;
+    rationalCoins = Math.round(rationalAmount / 10);
+    emotionalCoins = Math.round(emotionalAmount / 10);
   }
 
   // Tame tilt angle to max +/- 15 deg so the beam tilts smoothly without extreme distortion
   const safeTilt = Math.max(-15, Math.min(15, tiltAngle * 0.6));
 
-  // Responsive container width: roomy on desktop, never cramped on mobile
+  // Responsive container width
   const scaleWidth =
     size === 'lg'
       ? 'w-full max-w-4xl'
@@ -42,37 +43,99 @@ export function PixelScale({
   // Crossbeam height
   const beamHeight = size === 'lg' ? 'h-6 sm:h-8' : size === 'sm' ? 'h-4 sm:h-5' : 'h-5 sm:h-6';
 
-  // Compact pan width so left and right trays NEVER collide in the center on mobile
+  // Wide pan so coins can stack in columns
   const panWidth =
     size === 'lg'
-      ? 'w-36 sm:w-48 md:w-56'
+      ? 'w-44 sm:w-56 md:w-64'
       : size === 'sm'
-      ? 'w-20 sm:w-24'
-      : 'w-22 sm:w-32 md:w-40';
+      ? 'w-24 sm:w-28'
+      : 'w-28 sm:w-40 md:w-48';
 
-  // Container height with plenty of vertical breathing room
+  // Height of scale assembly with extra headroom for massive coin stacks
   const containerHeight =
     size === 'lg'
-      ? 'h-64 sm:h-80 md:h-96'
+      ? 'h-72 sm:h-96 md:h-[440px]'
       : size === 'sm'
-      ? 'h-40 sm:h-48'
-      : 'h-48 sm:h-60 md:h-72';
+      ? 'h-44 sm:h-52'
+      : 'h-56 sm:h-72 md:h-80';
 
   // Central fulcrum pillar height
   const pillarHeight =
     size === 'lg'
-      ? 'h-32 sm:h-44 md:h-52'
+      ? 'h-36 sm:h-48 md:h-56'
       : size === 'sm'
-      ? 'h-18 sm:h-24'
-      : 'h-24 sm:h-32 md:h-38';
+      ? 'h-20 sm:h-26'
+      : 'h-28 sm:h-36 md:h-42';
 
   // Responsive coin size
-  const coinSize =
+  const coinWidthClass =
     size === 'lg'
-      ? 'w-7 h-7 sm:w-9 sm:h-9 md:w-11 md:h-11'
+      ? 'w-6 h-6 sm:w-8 sm:h-8'
       : size === 'sm'
-      ? 'w-5 h-5 sm:w-6 sm:h-6'
-      : 'w-5 h-5 sm:w-7 sm:h-7 md:w-8 md:h-8';
+      ? 'w-4 h-4 sm:w-5 sm:h-5'
+      : 'w-5 h-5 sm:w-6 sm:h-6';
+
+  // Column count for stacks
+  const numCols = size === 'lg' ? 5 : size === 'sm' ? 3 : 4;
+
+  // Helper to render realistic stacked arcade coin piles
+  const renderCoinStack = (count: number, isLeft: boolean) => {
+    if (!showCoins) return null;
+
+    if (count === 0) {
+      return (
+        <span className="text-[10px] text-zinc-400 py-1 font-mono font-bold">
+          0 xu
+        </span>
+      );
+    }
+
+    // Cap visual rendering to 45 coins for max performance and crisp layout, but show actual total
+    const visualCount = Math.min(count, 45);
+    const columns: number[] = Array(numCols).fill(0);
+
+    for (let i = 0; i < visualCount; i++) {
+      columns[i % numCols]++;
+    }
+
+    return (
+      <div className="flex flex-col items-center justify-end">
+        {/* Count badge when coins accumulate high (> 10 xu) */}
+        {count > 10 && (
+          <div className="mb-1 px-1.5 py-0.5 bg-amber-400 text-amber-950 font-mono font-black text-[9px] sm:text-[10px] border border-[#18181B] shadow-xs animate-bounce">
+            🪙 {count} XU ({count * 10} Giá)
+          </div>
+        )}
+
+        {/* Multi-column vertical overlapping stack */}
+        <div className="flex items-end justify-center gap-0.5 sm:gap-1 pb-0.5">
+          {columns.map((colCount, colIdx) => {
+            if (colCount === 0) return null;
+            return (
+              <div key={colIdx} className="flex flex-col-reverse items-center">
+                {Array.from({ length: colCount }).map((_, coinIdx) => (
+                  <div
+                    key={coinIdx}
+                    className={`transition-transform duration-200 hover:scale-125 ${
+                      coinIdx > 0 ? '-mb-3 sm:-mb-4' : ''
+                    }`}
+                    style={{
+                      zIndex: coinIdx,
+                    }}
+                  >
+                    <PixelCoin
+                      value={10}
+                      className={`${coinWidthClass} drop-shadow-xs`}
+                    />
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className={`flex flex-col items-center select-none ${scaleWidth} mx-auto my-1 sm:my-2 px-1`}>
@@ -107,26 +170,17 @@ export function PixelScale({
           style={{ transform: `rotate(${safeTilt}deg)` }}
         >
           {/* LEFT SIDE: Rational Platform & Coins anchored at the FAR LEFT TIP of the beam */}
-          <div className="absolute left-0 bottom-full mb-0 flex flex-col items-center origin-bottom">
-            {/* Coins Stack neatly stacked on the tilted tray without spilling into center */}
-            <div className={`${panWidth} flex flex-col items-center justify-end origin-bottom`}>
-              {showCoins && (
-                <div className="min-h-8 sm:min-h-10 flex flex-wrap-reverse justify-center items-end gap-1 pb-1">
-                  {Array.from({ length: rationalCoins }).map((_, i) => (
-                    <PixelCoin
-                      key={i}
-                      value={10}
-                      className={`${coinSize} drop-shadow-sm transition-transform duration-150 hover:scale-110`}
-                    />
-                  ))}
-                  {rationalCoins === 0 && (
-                    <span className="text-[10px] text-zinc-400 py-1 font-mono">0 xu</span>
-                  )}
-                </div>
-              )}
+          {/* Counter-rotate by -safeTilt so the pan and stacked coins stay upright with gravity */}
+          <div
+            className="absolute left-0 bottom-full mb-0 flex flex-col items-center origin-bottom transition-transform duration-300 ease-out"
+            style={{ transform: `rotate(${-safeTilt}deg)` }}
+          >
+            {/* Stacking coins pile */}
+            <div className={`${panWidth} flex flex-col items-center justify-end origin-bottom min-h-12`}>
+              {renderCoinStack(rationalCoins, true)}
             </div>
 
-            {/* Brass Tray / Pan seated solidly on the beam */}
+            {/* Brass Tray / Pan seated solidly */}
             <div
               className={`${panWidth} h-2.5 sm:h-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 border-2 border-[#18181B] flex justify-between items-center px-1 shadow-[0_2px_0_0_#18181B]`}
             >
@@ -153,26 +207,17 @@ export function PixelScale({
           </div>
 
           {/* RIGHT SIDE: Emotional Platform & Coins anchored at the FAR RIGHT TIP of the beam */}
-          <div className="absolute right-0 bottom-full mb-0 flex flex-col items-center origin-bottom">
-            {/* Coins Stack neatly stacked on the tilted tray without spilling into center */}
-            <div className={`${panWidth} flex flex-col items-center justify-end origin-bottom`}>
-              {showCoins && (
-                <div className="min-h-8 sm:min-h-10 flex flex-wrap-reverse justify-center items-end gap-1 pb-1">
-                  {Array.from({ length: emotionalCoins }).map((_, i) => (
-                    <PixelCoin
-                      key={i}
-                      value={10}
-                      className={`${coinSize} drop-shadow-sm transition-transform duration-150 hover:scale-110`}
-                    />
-                  ))}
-                  {emotionalCoins === 0 && (
-                    <span className="text-[10px] text-zinc-400 py-1 font-mono">0 xu</span>
-                  )}
-                </div>
-              )}
+          {/* Counter-rotate by -safeTilt so the pan and stacked coins stay upright with gravity */}
+          <div
+            className="absolute right-0 bottom-full mb-0 flex flex-col items-center origin-bottom transition-transform duration-300 ease-out"
+            style={{ transform: `rotate(${-safeTilt}deg)` }}
+          >
+            {/* Stacking coins pile */}
+            <div className={`${panWidth} flex flex-col items-center justify-end origin-bottom min-h-12`}>
+              {renderCoinStack(emotionalCoins, false)}
             </div>
 
-            {/* Brass Tray / Pan seated solidly on the beam */}
+            {/* Brass Tray / Pan seated solidly */}
             <div
               className={`${panWidth} h-2.5 sm:h-3 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400 border-2 border-[#18181B] flex justify-between items-center px-1 shadow-[0_2px_0_0_#18181B]`}
             >

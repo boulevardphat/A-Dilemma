@@ -4,12 +4,17 @@ import React from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import { PixelBrain, PixelHeart } from '../pixel/PixelIcons';
+import { PixelMangaClashSummary } from '../pixel/PixelMangaClashSummary';
+import { Player } from '@/lib/types';
 
 interface ThankYouScreenProps {
   playerName: string;
   rational: number;
   emotional: number;
   teamName?: string;
+  totalRational?: number;
+  totalEmotional?: number;
+  players?: Player[];
   onResetPlayer?: () => void;
 }
 
@@ -18,48 +23,45 @@ export function ThankYouScreen({
   rational,
   emotional,
   teamName,
+  totalRational = 50,
+  totalEmotional = 50,
+  players = [],
   onResetPlayer,
 }: ThankYouScreenProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.96, y: 10 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ type: 'spring', stiffness: 220, damping: 20 }}
-      className="w-full max-w-lg mx-auto text-center px-4 py-8 sm:py-14 select-none"
-    >
-      <h1 className="text-2xl sm:text-4xl font-black text-[#18181B] mb-3">
-        CẢM ƠN BẠN ĐÃ THAM GIA!
-      </h1>
+    <div className="w-full max-w-4xl mx-auto text-center px-2 py-4 select-none">
+      <div className="mb-4">
+        <h1 className="text-2xl sm:text-4xl font-black text-[#18181B] mb-1">
+          CẢM ƠN BẠN ĐÃ THAM GIA!
+        </h1>
+        <p className="text-xs sm:text-sm text-zinc-600 font-medium">
+          Lựa chọn của <strong className="text-black">{teamName ? `${teamName} (${playerName})` : playerName}</strong> ({rational} Giá Lý trí / {emotional} Giá Tình cảm) đã được tổng hợp vào kết quả lớp:
+        </p>
+      </div>
 
-      <p className="text-xs sm:text-sm text-zinc-600 mb-6 font-medium leading-relaxed">
-        Lựa chọn của <span className="font-bold text-black">{teamName ? `${teamName} (${playerName})` : playerName}</span> đã được ghi nhận vào cán cân thời gian thực của lớp.
-      </p>
+      {/* MANGA DIAGONAL BATTLE CLASH DISPLAY */}
+      <PixelMangaClashSummary
+        totalRational={totalRational}
+        totalEmotional={totalEmotional}
+        players={players}
+        isHost={false}
+        onHome={onResetPlayer}
+      />
 
-      <div className="flex items-center justify-center gap-6 sm:gap-10 text-center my-6 bg-white p-4 sm:p-5 border-2 border-zinc-200 shadow-[0_2px_0_0_#18181B]">
-        <div>
-          <div className="flex items-center justify-center gap-1.5 mb-1 text-blue-600">
-            <PixelBrain className="w-5 h-5" />
-            <span className="text-xs font-black uppercase">Lý trí</span>
-          </div>
-          <div className="text-2xl sm:text-3xl font-black text-[#18181B]">
-            {rational} Giá
-          </div>
+      {/* Personal Choice Quick Bar */}
+      <div className="bg-white border-2 border-zinc-200 p-3 sm:p-4 my-4 flex items-center justify-around shadow-[0_2px_0_0_#18181B] max-w-md mx-auto">
+        <div className="text-center">
+          <div className="text-[10px] font-mono font-bold text-zinc-500 uppercase">Bạn đã chọn Lý trí</div>
+          <div className="text-lg sm:text-xl font-black text-blue-700">{rational} Giá ({Math.round(rational / 10)} xu)</div>
         </div>
-
-        <div className="text-zinc-300 text-3xl font-light">/</div>
-
-        <div>
-          <div className="flex items-center justify-center gap-1.5 mb-1 text-red-600">
-            <PixelHeart className="w-5 h-5" />
-            <span className="text-xs font-black uppercase">Tình cảm</span>
-          </div>
-          <div className="text-2xl sm:text-3xl font-black text-[#18181B]">
-            {emotional} Giá
-          </div>
+        <div className="text-zinc-300 font-light text-2xl">/</div>
+        <div className="text-center">
+          <div className="text-[10px] font-mono font-bold text-zinc-500 uppercase">Bạn đã chọn Tình cảm</div>
+          <div className="text-lg sm:text-xl font-black text-red-600">{emotional} Giá ({Math.round(emotional / 10)} xu)</div>
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6">
         {onResetPlayer && (
           <button
             type="button"
@@ -77,6 +79,6 @@ export function ThankYouScreen({
           ← Về trang chủ
         </Link>
       </div>
-    </motion.div>
+    </div>
   );
 }

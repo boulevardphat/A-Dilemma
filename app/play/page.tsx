@@ -10,13 +10,13 @@ import { ThankYouScreen } from '@/components/player/ThankYouScreen';
 import { PixelScale } from '@/components/pixel/PixelScale';
 import { PixelBreakingNews } from '@/components/pixel/PixelBreakingNews';
 import { PixelTeam, PixelUser } from '@/components/pixel/PixelIcons';
-import { PixelNotificationCenter } from '@/components/pixel/PixelNotificationCenter';
-import { useGameNotifications } from '@/lib/useGameNotifications';
+import { MASCOTS, PixelMascotAvatar, MascotId } from '@/components/pixel/PixelMascots';
 import {
   subscribeRoom,
   subscribePlayers,
   checkRoomExists,
   joinPlayer,
+  updatePlayerAvatar,
   submitVote,
   calculateTiltAngle,
 } from '@/lib/game';
@@ -27,6 +27,7 @@ interface StoredPlayer {
   name: string;
   type: PlayerMode;
   teamName?: string;
+  avatar?: string;
 }
 
 function PlayerContent() {
@@ -53,8 +54,8 @@ function PlayerContent() {
   const [timerRemaining, setTimerRemaining] = useState<number>(60);
   const [joining, setJoining] = useState<boolean>(false);
   const [joinError, setJoinError] = useState<string | null>(null);
+  const [selectedAvatar, setSelectedAvatar] = useState<string>(player?.avatar || 'cat');
 
-  const { notifications, addNotification, dismiss, syncPlayers } = useGameNotifications();
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // If URL has a different pin than current stored session, switch to new pin
@@ -85,10 +86,14 @@ function PlayerContent() {
 
     const unsubPlayers = subscribePlayers(player.pin, (updatedPlayers) => {
       setPlayers(updatedPlayers);
-      syncPlayers(updatedPlayers);
       const me = updatedPlayers.find((p) => p.id === player.id);
-      if (me && debounceTimerRef.current === null) {
-        setLocalRational(me.rational);
+      if (me) {
+        if (debounceTimerRef.current === null) {
+          setLocalRational(me.rational);
+        }
+        if (me.avatar && me.avatar !== selectedAvatar) {
+          setSelectedAvatar(me.avatar);
+        }
       }
     });
 
@@ -96,7 +101,7 @@ function PlayerContent() {
       unsubRoom();
       unsubPlayers();
     };
-  }, [player?.pin, player?.id, syncPlayers]);
+  }, [player?.pin, player?.id, selectedAvatar]);
 
   // Synchronized countdown timer
   useEffect(() => {
@@ -166,20 +171,22 @@ function PlayerContent() {
     }
   };
 
-  const handleSliderChange = (newRational: number) => {
-    const diff = newRational - localRational;
-    const deltaCoins = Math.round(Math.abs(diff) / 10);
-    if (deltaCoins > 0) {
-      addNotification({
-        actorName: player?.name || 'Bạn',
-        isTeam: player?.type === 'team',
-        deltaCoins,
-        targetSide: diff > 0 ? 'rational' : 'emotional',
-        fromSide: diff > 0 ? 'emotional' : 'rational',
-        customTitle: 'BẠN VỪA ĐIỀU CHỈNH',
-      });
+  const handleSelectMascot = async (mascotId: MascotId) => {
+    setSelectedAvatar(mascotId);
+    if (!player) return;
+    try {
+      await updatePlayerAvatar(player.pin, player.id, mascotId);
+      const updated = { ...player, avatar: mascotId };
+      setPlayer(updated);
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('dilemma_player_v6', JSON.stringify(updated));
+      }
+    } catch (err) {
+      console.error('Lỗi đổi linh vật:', err);
     }
+  };
 
+  const handleSliderChange = (newRational: number) => {
     setLocalRational(newRational);
 
     if (!player) return;
@@ -263,8 +270,9 @@ function PlayerContent() {
             PHÒNG CHỜ LỚP HỌC
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-black text-[#18181B] mb-2">
-            CHÀO MỪNG {player.name.toUpperCase()}!
+          <h2 className="text-2xl sm:text-3xl font-black text-[#18181B] mb-1 flex items-center justify-center gap-2">
+            <PixelMascotAvatar mascotId={selectedAvatar} className="w-8 h-8" />
+            <span>CHÀO MỪNG {player.name.toUpperCase()}!</span>
           </h2>
 
           {player.teamName && (
@@ -273,9 +281,45 @@ function PlayerContent() {
             </p>
           )}
 
-          <p className="text-xs sm:text-sm text-zinc-600 mb-6 font-medium">
-            Bạn đã sẵn sàng. Vui lòng nhìn lên màn hình chính của quản trò và chờ bắt đầu...
+          <p className="text-xs sm:text-sm text-zinc-600 mb-5 font-medium">
+            Chọn linh vật đại diện và chờ quản trò bắt đầu trò chơi...
           </p>
+
+          {/* 8-bit Mascot Selection Grid */}
+          <div className="bg-white p-3 sm:p-4 border-2 border-zinc-200 shadow-[0_2px_0_0_#18181B] mb-5 text-left">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] sm:text-xs font-black uppercase text-zinc-700 tracking-wider">
+                CHỌN LINH VẬT 8-BIT:
+              </span>
+              <span className="text-[10px] sm:text-xs font-bold text-amber-800 font-mono bg-amber-100 px-2 py-0.5 border border-amber-300">
+                {MASCOTS.find((m) => m.id === selectedAvatar)?.name || 'Mèo Tốc Ký'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+              {MASCOTS.map((m) => {
+                const isSelected = selectedAvatar === m.id;
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => handleSelectMascot(m.id)}
+                    className={`p-2 border-2 flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
+                      isSelected
+                        ? 'border-[#18181B] bg-amber-100 shadow-[0_2px_0_0_#18181B] scale-105'
+                        : 'border-zinc-200 bg-zinc-50 hover:bg-zinc-100'
+                    }`}
+                    title={`${m.name} - ${m.role}`}
+                  >
+                    <PixelMascotAvatar mascotId={m.id} className="w-7 h-7 sm:w-8 sm:h-8" />
+                    <span className="text-[9px] font-bold truncate max-w-full text-zinc-800">
+                      {m.name.split(' ')[0]}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           <div className="bg-white p-4 sm:p-5 border-2 border-zinc-200 shadow-[0_2px_0_0_#18181B] mb-6">
             <div className="text-xs text-zinc-500 font-bold uppercase tracking-wider mb-3">
@@ -287,11 +331,7 @@ function PlayerContent() {
                   key={p.id}
                   className="px-2.5 py-1.5 bg-zinc-100 text-xs font-bold flex items-center gap-1.5 border border-zinc-300"
                 >
-                  {p.type === 'team' ? (
-                    <PixelTeam className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  ) : (
-                    <PixelUser className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                  )}
+                  <PixelMascotAvatar mascotId={p.avatar || 'cat'} className="w-4 h-4 shrink-0" />
                   <span className="truncate max-w-[140px]">{p.teamName ? `${p.teamName} (${p.name})` : p.name}</span>
                 </div>
               ))}
@@ -307,7 +347,6 @@ function PlayerContent() {
           </button>
         </div>
 
-        <PixelNotificationCenter notifications={notifications} onDismiss={dismiss} />
         <div />
       </main>
     );
@@ -353,6 +392,9 @@ function PlayerContent() {
           teamName={player.teamName}
           rational={localRational}
           emotional={100 - localRational}
+          totalRational={totalRational}
+          totalEmotional={totalEmotional}
+          players={players}
           onResetPlayer={() => handleLeaveRoom(false)}
         />
 
@@ -419,7 +461,6 @@ function PlayerContent() {
         </div>
       </div>
 
-      <PixelNotificationCenter notifications={notifications} onDismiss={dismiss} />
       <div />
     </main>
   );

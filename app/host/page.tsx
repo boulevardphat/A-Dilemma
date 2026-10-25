@@ -14,6 +14,8 @@ import {
   PixelUser,
 } from '@/components/pixel/PixelIcons';
 import { PixelNotificationCenter } from '@/components/pixel/PixelNotificationCenter';
+import { PixelMangaClashSummary } from '@/components/pixel/PixelMangaClashSummary';
+import { PixelMascotAvatar } from '@/components/pixel/PixelMascots';
 import { useGameNotifications } from '@/lib/useGameNotifications';
 import {
   createRoom,
@@ -316,11 +318,7 @@ function HostContent() {
                     key={p.id}
                     className="px-3 py-1.5 sm:px-3.5 sm:py-2 bg-zinc-50 border border-zinc-300 text-xs font-bold flex items-center gap-2 shadow-xs"
                   >
-                    {p.type === 'team' ? (
-                      <PixelTeam className="w-4 h-4 text-emerald-600 shrink-0" />
-                    ) : (
-                      <PixelUser className="w-4 h-4 text-blue-600 shrink-0" />
-                    )}
+                    <PixelMascotAvatar mascotId={p.avatar || 'cat'} className="w-4 h-4 shrink-0" />
                     <span>{p.teamName ? `${p.teamName} (${p.name})` : p.name}</span>
                   </div>
                 ))}
@@ -412,94 +410,84 @@ function HostContent() {
         />
       )}
 
-      {/* CENTER HERO STAGE: Giant Timer + Scale */}
-      <div className="flex-1 flex flex-col items-center justify-center my-auto py-2 sm:py-4">
-        <div className="w-full max-w-4xl text-center px-1">
-          {/* Round status indicator */}
-          <div className="text-xs sm:text-base uppercase tracking-wider text-zinc-500 font-black mb-1 sm:mb-2">
-            {room.status === 'ROUND_1' && 'Vòng 1: Tình huống gốc (60s)'}
-            {room.status === 'TWIST_1' && 'Vòng 2: Breaking News 1 (30s)'}
-            {room.status === 'TWIST_2' && 'Vòng 3: Breaking News 2 (30s)'}
-            {room.status === 'THANK_YOU' && 'Kết thúc: Tổng kết kết quả'}
-          </div>
-
-          {/* CENTERED ARCADE TIMER */}
-          <div className="mb-2">
-            <div
-              className={`font-mono text-5xl sm:text-7xl md:text-8xl font-black ${
-                room.timerRunning && timerRemaining <= 10
-                  ? 'text-red-600 animate-pulse'
-                  : 'text-[#18181B]'
-              }`}
-            >
-              {timerStr}
-            </div>
-          </div>
-
-          {/* MAIN PHYSICAL SCALE - Responsive */}
-          <PixelScale
-            rationalAmount={totalRational}
-            emotionalAmount={totalEmotional}
-            tiltAngle={tiltAngle}
-            size="lg"
-            showCoins
+      {/* CENTER HERO STAGE: Giant Timer + Scale OR Manga Clash Summary */}
+      {room.status === 'THANK_YOU' ? (
+        <div className="flex-1 w-full max-w-5xl mx-auto flex flex-col justify-center">
+          <PixelMangaClashSummary
+            totalRational={totalRational}
+            totalEmotional={totalEmotional}
+            players={players}
+            isHost={true}
+            onReset={() => hostResetRoom(pin)}
+            onDeleteRoom={handleDeleteRoom}
           />
-
-          {/* Aggregated Figures */}
-          <div className="flex items-center justify-center gap-8 sm:gap-16 mt-4 sm:mt-6 text-center">
-            <div>
-              <div className="flex items-center justify-center gap-1.5 text-blue-700 mb-1">
-                <PixelBrain className="w-5 h-5 sm:w-7 sm:h-7" />
-                <span className="text-xs sm:text-base font-black uppercase tracking-wider">
-                  LÝ TRÍ
-                </span>
-              </div>
-              <div className="text-3xl sm:text-5xl font-black text-[#18181B]">
-                {percentRational}%
-              </div>
-              <div className="text-[11px] sm:text-xs text-zinc-500 font-mono font-bold mt-0.5">
-                {totalRational} Giá
-              </div>
-            </div>
-
-            <div className="text-zinc-300 text-3xl sm:text-4xl font-light">/</div>
-
-            <div>
-              <div className="flex items-center justify-center gap-1.5 text-red-600 mb-1">
-                <PixelHeart className="w-5 h-5 sm:w-7 sm:h-7" />
-                <span className="text-xs sm:text-base font-black uppercase tracking-wider">
-                  TÌNH CẢM
-                </span>
-              </div>
-              <div className="text-3xl sm:text-5xl font-black text-[#18181B]">
-                {percentEmotional}%
-              </div>
-              <div className="text-[11px] sm:text-xs text-zinc-500 font-mono font-bold mt-0.5">
-                {totalEmotional} Giá
-              </div>
-            </div>
-          </div>
         </div>
-      </div>
+      ) : (
+        <div className="flex-1 flex flex-col items-center justify-center my-auto py-2 sm:py-4">
+          <div className="w-full max-w-4xl text-center px-1">
+            {/* Round status indicator */}
+            <div className="text-xs sm:text-base uppercase tracking-wider text-zinc-500 font-black mb-1 sm:mb-2">
+              {room.status === 'ROUND_1' && 'Vòng 1: Tình huống gốc (60s)'}
+              {room.status === 'TWIST_1' && 'Vòng 2: Breaking News 1 (30s)'}
+              {room.status === 'TWIST_2' && 'Vòng 3: Breaking News 2 (30s)'}
+            </div>
 
-      {/* Post-game Summary */}
-      {room.status === 'THANK_YOU' && (
-        <div className="w-full max-w-xl mx-auto my-3 text-center animate-fadeIn px-2">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => hostResetRoom(pin)}
-              className="pixel-btn w-full sm:w-auto px-6 py-3 bg-[#18181B] text-white hover:bg-zinc-800 text-xs sm:text-sm font-black cursor-pointer shadow-[0_3px_0_0_#000]"
-            >
-              Chơi lại phòng này
-            </button>
-            <button
-              type="button"
-              onClick={handleDeleteRoom}
-              className="pixel-btn w-full sm:w-auto px-6 py-3 bg-red-600 text-white hover:bg-red-700 text-xs sm:text-sm font-black cursor-pointer shadow-[0_3px_0_0_#000]"
-            >
-              Đóng & Xóa phòng
-            </button>
+            {/* CENTERED ARCADE TIMER */}
+            <div className="mb-2">
+              <div
+                className={`font-mono text-5xl sm:text-7xl md:text-8xl font-black ${
+                  room.timerRunning && timerRemaining <= 10
+                    ? 'text-red-600 animate-pulse'
+                    : 'text-[#18181B]'
+                }`}
+              >
+                {timerStr}
+              </div>
+            </div>
+
+            {/* MAIN PHYSICAL SCALE - Responsive */}
+            <PixelScale
+              rationalAmount={totalRational}
+              emotionalAmount={totalEmotional}
+              tiltAngle={tiltAngle}
+              size="lg"
+              showCoins
+            />
+
+            {/* Aggregated Figures */}
+            <div className="flex items-center justify-center gap-8 sm:gap-16 mt-4 sm:mt-6 text-center">
+              <div>
+                <div className="flex items-center justify-center gap-1.5 text-blue-700 mb-1">
+                  <PixelBrain className="w-5 h-5 sm:w-7 sm:h-7" />
+                  <span className="text-xs sm:text-base font-black uppercase tracking-wider">
+                    LÝ TRÍ
+                  </span>
+                </div>
+                <div className="text-3xl sm:text-5xl font-black text-[#18181B]">
+                  {percentRational}%
+                </div>
+                <div className="text-[11px] sm:text-xs text-zinc-500 font-mono font-bold mt-0.5">
+                  {totalRational} Giá
+                </div>
+              </div>
+
+              <div className="text-zinc-300 text-3xl sm:text-4xl font-light">/</div>
+
+              <div>
+                <div className="flex items-center justify-center gap-1.5 text-red-600 mb-1">
+                  <PixelHeart className="w-5 h-5 sm:w-7 sm:h-7" />
+                  <span className="text-xs sm:text-base font-black uppercase tracking-wider">
+                    TÌNH CẢM
+                  </span>
+                </div>
+                <div className="text-3xl sm:text-5xl font-black text-[#18181B]">
+                  {percentEmotional}%
+                </div>
+                <div className="text-[11px] sm:text-xs text-zinc-500 font-mono font-bold mt-0.5">
+                  {totalEmotional} Giá
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

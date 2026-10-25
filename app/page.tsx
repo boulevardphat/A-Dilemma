@@ -26,7 +26,7 @@ export default function HomePage() {
         </p>
 
         {/* Scaled preview with plenty of breathing room */}
-        <div className="my-2 sm:my-4 pointer-events-none opacity-95">
+        <div className="my-2 sm:my-4 pointer-events-none opacity-100">
           <PixelScale
             rationalAmount={50}
             emotionalAmount={50}
@@ -50,7 +50,7 @@ export default function HomePage() {
           <Link
             href="/host"
             onClick={() => sound.playClick()}
-            className="pixel-btn w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 font-black text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer"
+            className="pixel-btn w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 bg-white text-[#18181B] border-2 border-[#18181B] hover:bg-zinc-100 font-black text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer shadow-[0_3px_0_0_#000]"
           >
             <span>MÀN HÌNH QUẢN TRÒ</span>
           </Link>

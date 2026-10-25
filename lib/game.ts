@@ -347,18 +347,18 @@ export async function hostResetRoom(pin: string): Promise<void> {
 
 export async function hostSimulateClass(pin: string, count: number = 12): Promise<void> {
   const sampleNames = [
-    { name: 'Minh Hoàng', type: 'individual' as const, avatar: 'pen' },
-    { name: 'Bảo Trâm', type: 'individual' as const, avatar: 'typewriter' },
-    { name: 'Nhóm Tin Tức 01', type: 'team' as const, teamName: 'Nhóm Tin Tức 01', avatar: 'press' },
-    { name: 'Anh Quân', type: 'individual' as const, avatar: 'lens' },
-    { name: 'Nhóm Phóng Viên Trẻ', type: 'team' as const, teamName: 'Nhóm Phóng Viên Trẻ', avatar: 'radio' },
-    { name: 'Hải Đăng', type: 'individual' as const, avatar: 'pen' },
-    { name: 'Kim Ngân', type: 'individual' as const, avatar: 'typewriter' },
-    { name: 'Nhóm Sự Thật', type: 'team' as const, teamName: 'Nhóm Sự Thật', avatar: 'press' },
-    { name: 'Quốc Bảo', type: 'individual' as const, avatar: 'lens' },
-    { name: 'Thùy Chi', type: 'individual' as const, avatar: 'radio' },
-    { name: 'Nhóm Độc Lập', type: 'team' as const, teamName: 'Nhóm Độc Lập', avatar: 'press' },
-    { name: 'Phương Linh', type: 'individual' as const, avatar: 'typewriter' },
+    { name: 'Minh Hoàng', type: 'individual' as const, avatar: 'owl' },
+    { name: 'Bảo Trâm', type: 'individual' as const, avatar: 'cat' },
+    { name: 'Nhóm Tin Tức 01', type: 'team' as const, teamName: 'Nhóm Tin Tức 01', avatar: 'fox' },
+    { name: 'Anh Quân', type: 'individual' as const, avatar: 'bot' },
+    { name: 'Nhóm Phóng Viên Trẻ', type: 'team' as const, teamName: 'Nhóm Phóng Viên Trẻ', avatar: 'pigeon' },
+    { name: 'Hải Đăng', type: 'individual' as const, avatar: 'dino' },
+    { name: 'Kim Ngân', type: 'individual' as const, avatar: 'bunny' },
+    { name: 'Nhóm Sự Thật', type: 'team' as const, teamName: 'Nhóm Sự Thật', avatar: 'bear' },
+    { name: 'Quốc Bảo', type: 'individual' as const, avatar: 'owl' },
+    { name: 'Thùy Chi', type: 'individual' as const, avatar: 'cat' },
+    { name: 'Nhóm Độc Lập', type: 'team' as const, teamName: 'Nhóm Độc Lập', avatar: 'fox' },
+    { name: 'Phương Linh', type: 'individual' as const, avatar: 'bunny' },
   ];
 
   const batch = writeBatch(db);
@@ -380,6 +380,15 @@ export async function hostSimulateClass(pin: string, count: number = 12): Promis
   });
 
   await batch.commit();
+}
+
+export async function updatePlayerAvatar(pin: string, playerId: string, avatar: string): Promise<void> {
+  const cleanPin = (pin || '').trim().toUpperCase();
+  const playerRef = doc(db, 'rooms', cleanPin, 'players', playerId);
+  await updateDoc(playerRef, {
+    avatar,
+    lastActive: Date.now(),
+  });
 }
 
 export async function hostSimulateVoteShift(pin: string): Promise<void> {

@@ -56,20 +56,20 @@ export function useGameNotifications() {
 
     if (!isInitializedRef.current) {
       // First snapshot: just store without notification burst
-      const initialMap = new Map<string, { rational: number; name: string; type: string }>();
+      const initialMap = new Map<string, { rational: number; name: string; type: string; avatar?: string }>();
       players.forEach((p) => {
-        initialMap.set(p.id, { rational: p.rational, name: p.name, type: p.type });
+        initialMap.set(p.id, { rational: p.rational, name: p.name, type: p.type, avatar: p.avatar });
       });
       prevPlayersRef.current = initialMap;
       isInitializedRef.current = true;
       return;
     }
 
-    const currentMap = new Map<string, { rational: number; name: string; type: string }>();
+    const currentMap = new Map<string, { rational: number; name: string; type: string; avatar?: string }>();
     const prevMap = prevPlayersRef.current;
 
     players.forEach((p) => {
-      currentMap.set(p.id, { rational: p.rational, name: p.name, type: p.type });
+      currentMap.set(p.id, { rational: p.rational, name: p.name, type: p.type, avatar: p.avatar });
       const prev = prevMap.get(p.id);
 
       if (prev) {
@@ -80,6 +80,7 @@ export function useGameNotifications() {
             const targetSide = diff > 0 ? 'rational' : 'emotional';
             addNotification({
               actorName: p.teamName ? `${p.teamName} (${p.name})` : p.name,
+              avatar: p.avatar,
               isTeam: p.type === 'team',
               deltaCoins,
               targetSide,
@@ -92,6 +93,7 @@ export function useGameNotifications() {
         const rationalCoins = Math.round(p.rational / 10);
         addNotification({
           actorName: p.teamName ? `${p.teamName} (${p.name})` : p.name,
+          avatar: p.avatar,
           isTeam: p.type === 'team',
           deltaCoins: rationalCoins,
           targetSide: 'rational',
