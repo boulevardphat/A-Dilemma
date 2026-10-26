@@ -55,17 +55,6 @@ export function PixelBreakingNews({
       <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-red-600 via-amber-400 to-red-600 animate-pulse z-20" />
       <div className="absolute inset-x-0 bottom-0 h-1.5 bg-gradient-to-r from-red-600 via-amber-400 to-red-600 animate-pulse z-20" />
 
-      {/* Top Header / Channel Bar */}
-      <div className="relative z-10 w-full max-w-4xl mx-auto flex items-center justify-between text-[11px] sm:text-xs font-mono font-bold text-zinc-400 pt-2 px-2">
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 bg-red-600 rounded-full animate-ping inline-block" />
-          <span className="text-red-400 font-black tracking-widest uppercase">
-            LIVE BROADCAST · PHÁT SÓNG ĐẶC BIỆT
-          </span>
-        </div>
-        <div className="text-zinc-500 font-mono">KÊNH ĐẠI LỘ #01</div>
-      </div>
-
       {/* MAIN STAGE CONTENT */}
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center max-w-3xl mx-auto w-full px-2 py-4">
         <AnimatePresence mode="wait">
@@ -96,7 +85,7 @@ export function PixelBreakingNews({
               </div>
             </motion.div>
           ) : (
-            /* STAGE 2: Compressed Top Badge + Unfolded Story Details */
+            /* STAGE 2: Headline and Story Details */
             <motion.div
               key="reveal-content"
               initial={{ opacity: 0, y: 40, scale: 0.95 }}
@@ -104,21 +93,13 @@ export function PixelBreakingNews({
               transition={{ type: 'spring', stiffness: 350, damping: 25 }}
               className="w-full text-center"
             >
-              {/* Shrunken Badge at top */}
-              <div className="inline-flex items-center gap-2 mb-4 bg-[#E50914] text-white px-5 py-1.5 border-2 border-white shadow-[0_2px_12px_rgba(229,9,20,0.6)]">
-                <span className="w-2 h-2 bg-amber-300 animate-pulse" />
-                <span className="text-sm sm:text-lg font-black tracking-wider uppercase">
-                  {twist.title}
-                </span>
-              </div>
-
               {/* Headline */}
-              <h3 className="text-xl sm:text-3xl font-black text-amber-300 mb-4 px-2 leading-tight">
+              <h3 className="text-2xl sm:text-4xl font-black text-amber-300 mb-6 px-2 leading-tight">
                 {twist.headline}
               </h3>
 
               {/* Story Details Box */}
-              <div className="bg-white/5 border-2 border-zinc-700 p-4 sm:p-6 mb-4 max-w-xl mx-auto text-left shadow-lg">
+              <div className="bg-white/5 border-2 border-zinc-700 p-4 sm:p-6 mb-6 max-w-xl mx-auto text-left shadow-lg">
                 <p className="text-xs sm:text-base text-zinc-100 leading-relaxed font-medium mb-3">
                   {twist.details}
                 </p>
@@ -142,9 +123,6 @@ export function PixelBreakingNews({
                     <PixelPointerHand className="w-5 h-5 text-amber-300" />
                     <span>BẮT ĐẦU ĐẾM GIỜ (30S)</span>
                   </button>
-                  <span className="text-[11px] sm:text-xs text-zinc-400">
-                    Bấm để mở đồng hồ 30 giây cho người chơi điều chỉnh lại cán cân
-                  </span>
                 </div>
               ) : (
                 <div className="text-xs sm:text-sm text-zinc-300 animate-pulse font-bold mt-3">
@@ -156,18 +134,6 @@ export function PixelBreakingNews({
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
-
-      {/* FOOTER: Animated Crawling Retro News Ticker (Marquee) */}
-      <div className="relative z-10 w-full bg-[#18181B] border-t-2 border-amber-400 overflow-hidden py-1.5">
-        <div className="flex whitespace-nowrap animate-marquee font-mono text-[11px] sm:text-xs font-bold text-amber-300">
-          <span className="mx-4">🚨 BẢN TIN KHẨN CẤP · BÁO CHÍ ĐIỀU TRA ĐỘC QUYỀN 🚨</span>
-          <span className="mx-4">THÔNG TIN MỚI CÓ THỂ ĐẢO CHIỀU HOÀN TOÀN CÁN CÂN QUYẾT ĐỊNH CỦA BẠN</span>
-          <span className="mx-4">● HÃY CÂN NHẮC GIỮA LÝ TRÍ VÀ TÌNH CẢM ●</span>
-          <span className="mx-4">🚨 BẢN TIN KHẨN CẤP · BÁO CHÍ ĐIỀU TRA ĐỘC QUYỀN 🚨</span>
-          <span className="mx-4">THÔNG TIN MỚI CÓ THỂ ĐẢO CHIỀU HOÀN TOÀN CÁN CÂN QUYẾT ĐỊNH CỦA BẠN</span>
-          <span className="mx-4">● HÃY CÂN NHẮC GIỮA LÝ TRÍ VÀ TÌNH CẢM ●</span>
-        </div>
       </div>
     </div>
   );

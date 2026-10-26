@@ -208,7 +208,7 @@ export async function joinPlayer(
     id: playerData.id,
     name: playerData.name.trim() || 'Người chơi 8-bit',
     type: playerData.type || 'individual',
-    avatar: playerData.avatar || 'typewriter',
+    avatar: playerData.avatar || 'journalist',
     rational,
     emotional,
     joinedAt,

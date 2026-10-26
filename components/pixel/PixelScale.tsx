@@ -100,13 +100,6 @@ export function PixelScale({
 
     return (
       <div className="flex flex-col items-center justify-end">
-        {/* Count badge when coins accumulate high (> 10 xu) */}
-        {count > 10 && (
-          <div className="mb-1 px-1.5 py-0.5 bg-amber-400 text-amber-950 font-mono font-black text-[9px] sm:text-[10px] border border-[#18181B] shadow-xs animate-bounce">
-            🪙 {count} XU ({count * 10} Giá)
-          </div>
-        )}
-
         {/* Multi-column vertical overlapping stack */}
         <div className="flex items-end justify-center gap-0.5 sm:gap-1 pb-0.5">
           {columns.map((colCount, colIdx) => {

@@ -54,7 +54,7 @@ function PlayerContent() {
   const [timerRemaining, setTimerRemaining] = useState<number>(60);
   const [joining, setJoining] = useState<boolean>(false);
   const [joinError, setJoinError] = useState<string | null>(null);
-  const [selectedAvatar, setSelectedAvatar] = useState<string>(player?.avatar || 'cat');
+  const [selectedAvatar, setSelectedAvatar] = useState<string>(player?.avatar || 'journalist');
 
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
