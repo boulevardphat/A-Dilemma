@@ -11,6 +11,7 @@ import { PixelScale } from '@/components/pixel/PixelScale';
 import { PixelBreakingNews } from '@/components/pixel/PixelBreakingNews';
 import { PixelTeam, PixelUser } from '@/components/pixel/PixelIcons';
 import { MASCOTS, PixelMascotAvatar, MascotId } from '@/components/pixel/PixelMascots';
+import { PixelCredit } from '@/components/pixel/PixelCredit';
 import {
   subscribeRoom,
   subscribePlayers,
@@ -239,7 +240,7 @@ function PlayerContent() {
           />
         </div>
 
-        <div />
+        <PixelCredit />
       </main>
     );
   }
@@ -347,7 +348,7 @@ function PlayerContent() {
           </button>
         </div>
 
-        <div />
+        <PixelCredit />
       </main>
     );
   }
@@ -398,7 +399,7 @@ function PlayerContent() {
           onResetPlayer={() => handleLeaveRoom(false)}
         />
 
-        <div />
+        <PixelCredit />
       </main>
     );
   }
@@ -461,7 +462,7 @@ function PlayerContent() {
         </div>
       </div>
 
-      <div />
+      <PixelCredit />
     </main>
   );
 }

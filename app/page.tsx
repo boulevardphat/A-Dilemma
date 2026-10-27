@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { PixelScale } from '@/components/pixel/PixelScale';
 import { PixelPointerHand } from '@/components/pixel/PixelIcons';
 import { PixelSoundToggle } from '@/components/pixel/PixelSoundToggle';
+import { PixelCredit } from '@/components/pixel/PixelCredit';
 import { sound } from '@/lib/sound';
 
 export default function HomePage() {
@@ -57,7 +58,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div />
+      <PixelCredit />
     </main>
   );
 }

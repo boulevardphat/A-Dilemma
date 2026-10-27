@@ -16,6 +16,7 @@ import {
 import { PixelNotificationCenter } from '@/components/pixel/PixelNotificationCenter';
 import { PixelMangaClashSummary } from '@/components/pixel/PixelMangaClashSummary';
 import { PixelMascotAvatar } from '@/components/pixel/PixelMascots';
+import { PixelCredit } from '@/components/pixel/PixelCredit';
 import { useGameNotifications } from '@/lib/useGameNotifications';
 import {
   createRoom,
@@ -493,7 +494,7 @@ function HostContent() {
       )}
 
       <PixelNotificationCenter notifications={notifications} onDismiss={dismiss} />
-      <div />
+      <PixelCredit />
     </main>
   );
 }
